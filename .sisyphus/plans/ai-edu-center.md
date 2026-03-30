@@ -715,7 +715,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 阶段三课程-建造者`
   - Files: `docs/04-phase3-builder.md`
 
-- [ ] 5. 阶段四课程：设计者（Designer）— L4 顶石阶段
+- [x] 5. 阶段四课程：设计者（Designer）— L4 顶石阶段
 
   **What to do**:
   - 设计阶段四完整课程：L4顶石阶段，学生独立发现问题、设计方案、构建应用
@@ -791,7 +791,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 阶段四课程-设计者`
   - Files: `docs/05-phase4-designer.md`
 
-- [ ] 9. 挑战库（20+挑战，跨阶段，含年龄分层）
+- [x] 9. 挑战库（20+挑战，跨阶段，含年龄分层）
 
   **What to do**:
   - 创建≥20个独立挑战，可在各阶段灵活使用
@@ -860,7 +860,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 挑战库`
   - Files: `docs/09-challenge-library.md`
 
-- [ ] 10. 集成审查与快速上手指南
+- [x] 10. 集成审查与快速上手指南
 
   **What to do**:
   - 审查全部9份文档的内部一致性：
