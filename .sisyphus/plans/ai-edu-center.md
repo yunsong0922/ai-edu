@@ -185,7 +185,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
 
 ## TODOs
 
-- [ ] 1. 课程哲学与 L1-L4 能力等级定义
+- [x] 1. 课程哲学与 L1-L4 能力等级定义
 
   **What to do**:
   - 撰写课程哲学声明（<500字）：为什么教"AI驾驶"而非"编程"，这所学校的独特教育理念
@@ -251,7 +251,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 课程哲学与能力等级定义`
   - Files: `docs/01-philosophy-and-levels.md`
 
-- [ ] 6. 基础设施与成本模型
+- [x] 6. 基础设施与成本模型
 
   **What to do**:
   - 设计技术基础设施方案：
@@ -325,7 +325,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 基础设施与成本模型`
   - Files: `docs/06-infrastructure-and-cost.md`
 
-- [ ] 7. 教师指南与培训方案
+- [x] 7. 教师指南与培训方案
 
   **What to do**:
   - 定义教师角色：引导者（facilitator），而非讲师（instructor）
@@ -419,7 +419,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 教师指南与培训方案`
   - Files: `docs/07-teacher-guide.md`
 
-- [ ] 8. 评估体系与作品集模板
+- [x] 8. 评估体系与作品集模板
 
   **What to do**:
   - 设计3级评估量表（未达到/进步中/已掌握），每阶段一个表：
@@ -494,7 +494,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 评估体系与作品集模板`
   - Files: `docs/08-assessment-framework.md`
 
-- [ ] 2. 阶段一课程：对话者（Dialoguer）
+- [x] 2. 阶段一课程：对话者（Dialoguer）
 
   **What to do**:
   - 设计阶段一完整课程：教学生如何与AI进行有效对话，产出具体结果
@@ -567,7 +567,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 阶段一课程-对话者`
   - Files: `docs/02-phase1-dialoguer.md`
 
-- [ ] 3. 阶段二课程：创造者（Creator）
+- [x] 3. 阶段二课程：创造者（Creator）
 
   **What to do**:
   - 设计阶段二完整课程：教学生用AI创造可以运行的东西（网页、小游戏等）
@@ -642,7 +642,7 @@ Wave FINAL (所有任务完成后 — 集成审查):
   - Message: `docs: 阶段二课程-创造者`
   - Files: `docs/03-phase2-creator.md`
 
-- [ ] 4. 阶段三课程：建造者（Builder）
+- [x] 4. 阶段三课程：建造者（Builder）
 
   **What to do**:
   - 设计阶段三完整课程：教学生从教师提供的需求说明出发，用AI构建完整的简单应用
