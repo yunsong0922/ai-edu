@@ -1,255 +1,255 @@
-# Lecture 10: Context Engineering — Advanced Patterns
+# 第10讲：Context Engineering 进阶模式
 
-> **Feynman Concept**: Beyond "manage your context window" — the engineering disciplines and concrete techniques for handling context at production scale.
-
----
-
-## Step 1: Explain It Simply
-
-Lecture 2 introduced the basics: context window is like a whiteboard, keep the important sticky notes, summarize the rest.
-
-But when you're building a real harness for a real production workload, "summarize the rest" isn't an engineering spec. It's a wish.
-
-Advanced context engineering asks the harder questions:
-- *When exactly* do you trigger compression?
-- *How* do you compress without losing critical information?
-- *What happens* when an agent is generating noisy output that's filling the window faster than useful work?
-- *How* do you keep the context "fresh" for a task that spans days?
-
-### Analogy 💻
-
-A computer's virtual memory system: When RAM fills up, the OS doesn't just randomly delete programs. It has a precise strategy — it identifies which memory pages haven't been touched recently (LRU), pages them to disk, and keeps frequently-used pages in RAM. When they're needed again, it pages them back in. Advanced context engineering is the same: deliberate, policy-driven, reversible.
+> **费曼核心概念**：超越"管理你的 context window"——在生产规模下处理 context 的工程学科和具体技术。
 
 ---
 
-## Step 2: Identify Gaps
+## 第一步：简单解释
 
-| Gap | What I Said | What I'm Not Sure About |
-|-----|-------------|------------------------|
-| 1 | "Trigger compression at 80%" | What's the right threshold? What triggers it? |
-| 2 | "Compress without losing critical info" | How do you actually compress safely? |
-| 3 | "Backpressure" | What does this term mean in context engineering? |
-| 4 | "Tool masking" | What is tool masking and when do you use it? |
+第2讲介绍了基础知识：context window 就像白板，保留重要的便签，把其余的摘要化。
+
+但当你为真实的生产工作负载构建真实的 harness 时，"摘要化其余的"不是工程规范，它只是一个愿望。
+
+进阶 context engineering 提出了更难的问题：
+- *什么时候*触发压缩？
+- *如何*在不丢失关键信息的情况下压缩？
+- 当 Agent 产生的噪声输出比有用工作更快地填满 context window 时，*怎么办*？
+- 对于跨越数天的任务，*如何*保持 context 的"新鲜度"？
+
+### 类比 💻
+
+计算机的虚拟内存系统：当 RAM 满了，操作系统不会随机删除程序。它有精确的策略——它识别出最近没有被访问过的内存页（LRU，最近最少使用），将它们换页到磁盘，并将常用页保留在 RAM 中。需要时再换页回来。进阶 context engineering 也是如此：深思熟虑的、基于策略的、可逆的。
 
 ---
 
-## Step 3: Fill the Gaps
+## 第二步：识别盲区
 
-### Gap 1: Compression Triggers and Thresholds
+| 盲区 | 我的说法 | 我不确定的地方 |
+|------|---------|--------------|
+| 1 | "在80%时触发压缩" | 正确的阈值是什么？什么触发它？ |
+| 2 | "安全地压缩而不丢失关键信息" | 你实际上如何安全地压缩？ |
+| 3 | "背压（Backpressure）" | 这个术语在 context engineering 中意味着什么？ |
+| 4 | "工具屏蔽（Tool masking）" | 什么是工具屏蔽，何时使用？ |
 
-**The answer** ([OpenHands — Context Condensation](https://openhands.dev/blog/openhands-context-condensensation-for-more-efficient-ai-agents)):
+---
 
-OpenHands' production system uses a **bounded conversation memory** design:
+## 第三步：填补盲区
 
-Compression is triggered when:
-- Context reaches a threshold (e.g., 75-80% of max window)
-- OR a natural breakpoint is reached (task phase boundary, tool call batch complete)
+### 盲区1：压缩触发条件和阈值
 
-The threshold isn't about a single magic number. The key insight: trigger compression *before* you need it, not when you're at the limit. At the limit, you have no room to do the compression work itself.
+**解答**（[OpenHands — Context Condensation](https://openhands.dev/blog/openhands-context-condensensation-for-more-efficient-ai-agents)）：
 
-**The compression policy**:
+OpenHands 的生产系统使用**有界对话记忆（bounded conversation memory）**设计：
+
+在以下情况触发压缩：
+- Context 达到阈值（例如，最大 window 的75-80%）
+- 或达到自然断点（任务阶段边界、工具调用批次完成）
+
+阈值不是关于单一的魔法数字。核心洞见：在*需要*压缩之前触发压缩，而不是在到达极限时。在极限时，你已经没有空间来完成压缩工作本身了。
+
+**压缩策略**：
 ```
-ALWAYS KEEP (never compress):
-  - Current task goal
-  - Current task constraints (from agent file)
-  - List of files being modified
-  - Failing test names + error messages
-  - Last 2-3 turns (recent context)
+始终保留（never compress）：
+  - 当前任务目标
+  - 当前任务约束（来自 agent file）
+  - 正在修改的文件列表
+  - 失败的测试名称 + 错误信息
+  - 最近2-3轮（近期上下文）
 
-SUMMARIZE (compress to ~10% of original):
-  - Completed tool call sequences
-  - Previous turns beyond the recent window
-  - File reads of stable files (cache the summary)
+摘要化（compress to ~10% of original）：
+  - 已完成的工具调用序列
+  - 超出近期窗口的前几轮
+  - 对稳定文件的读取（缓存摘要）
 
-DROP ENTIRELY:
-  - Successful tool calls with no lasting relevance
-  - Diagnostic/debug output that has been acted on
-  - Repeated content (same file read multiple times)
-```
-
-**Simple version**: Compress proactively, not reactively. The last thing you want is to compress while you're in the middle of a critical reasoning step.
-
----
-
-### Gap 2: Safe Compression Techniques
-
-**The answer** ([Manus — Context Engineering for AI Agents](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) + [HumanLayer — Advanced Context Engineering](https://www.humanlayer.dev/blog/advanced-context-engineering)):
-
-**Technique 1: Progressive summarization**
-Don't compress everything at once. Summarize in layers:
-- Recent turns: kept verbatim
-- Medium-age turns: summarized at sentence level
-- Old turns: summarized at paragraph level
-- Very old turns: one-line entries in a "completed work" log
-
-**Technique 2: Persistent filesystem memory**
-Move information out of context into files:
-```
-Instead of: keeping 500 lines of file analysis in context
-Do: write analysis to /task/notes/auth-module-analysis.md
-    keep in context: "Analysis written to /task/notes/auth-module-analysis.md — key finding: deprecated API on line 247"
+完全丢弃（Drop entirely）：
+  - 没有持久相关性的成功工具调用
+  - 已处理过的诊断/调试输出
+  - 重复内容（同一文件读取多次）
 ```
 
-The agent can re-read the file if needed, but it doesn't occupy context constantly.
-
-**Technique 3: KV-cache locality preservation**
-When compressing, keep the structure stable:
-- System prompt: always at position 0, never modified
-- Agent file contents: always at position 1, never modified
-- Compressed history: always in the same structural slot
-- Active working context: always at the end
-
-Moving content between positions breaks the KV cache and increases cost.
-
-**Simple version**: Compress incrementally, externalize to files when possible, and keep the structure of your context stable so the cache works.
+**简单版本**：主动压缩，而非被动响应。你最不想要的，就是在关键推理步骤的中途压缩。
 
 ---
 
-### Gap 3: Backpressure
+### 盲区2：安全压缩技术
 
-**The question**: What is backpressure in the context of agents?
+**解答**（[Manus — Context Engineering for AI Agents](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) + [HumanLayer — Advanced Context Engineering](https://www.humanlayer.dev/blog/advanced-context-engineering)）：
 
-**The answer** ([HumanLayer — Context-Efficient Backpressure](https://www.humanlayer.dev/blog/context-efficient-backpressure)):
+**技术1：渐进式摘要（Progressive summarization）**
+不要一次压缩所有内容。分层摘要：
+- 近期轮次：逐字保留
+- 中期轮次：在句子层面摘要
+- 旧轮次：在段落层面摘要
+- 非常老的轮次：在"已完成工作"日志中只占一行
 
-In distributed systems, backpressure is the mechanism that slows down producers when consumers can't keep up. In context engineering, backpressure is the harness mechanism that prevents agents from generating more context than they can productively use.
-
-Symptoms that need backpressure:
-- Agent is doing exploratory searches that fill context without contributing to the task
-- Tool calls returning large outputs that the agent reads but doesn't use
-- Agent generating verbose reasoning that doesn't lead to action
-
-Backpressure techniques:
-1. **Tool output caps** — tools return at most N lines; agent must ask for more if needed
-2. **Search result filtering** — don't return 100 search results; return 10 with summaries
-3. **Forced checkpoints** — after N tool calls, agent must summarize progress before continuing
-4. **Token budget signals** — tell the agent explicitly how much context budget remains
-
-**Simple version**: If your agent is burning context on noise, the harness needs to slow down the noise production, not just clean up after it.
-
----
-
-### Gap 4: Tool Masking
-
-**The question**: What is tool masking?
-
-**The answer** ([Manus — Context Engineering](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus)):
-
-Tool masking is the practice of hiding tools from the agent's context when they're not relevant to the current task phase.
-
-Example:
+**技术2：持久化文件系统记忆（Persistent filesystem memory）**
+将信息从 context 移到文件中：
 ```
-Phase: Planning
-  Available tools: read_file, list_directory, search_code
-  Masked tools: write_file, run_tests, deploy (hidden from context)
-
-Phase: Implementation
-  Available tools: read_file, write_file, run_tests
-  Masked tools: deploy, send_email (hidden from context)
-
-Phase: Verification
-  Available tools: run_tests, read_file
-  Masked tools: write_file, deploy (hidden from context)
+不是：在 context 中保留500行文件分析
+而是：将分析写入 /task/notes/auth-module-analysis.md
+      在 context 中保留："分析已写入 /task/notes/auth-module-analysis.md — 关键发现：第247行的废弃 API"
 ```
 
-Benefits:
-- Reduces the context space the agent reasons over
-- Prevents agents from taking premature actions (can't call what isn't visible)
-- Narrows the decision space → better decisions in the available space
+如果需要，Agent 可以重新读取该文件，但它不会持续占用 context。
 
-**Simple version**: Don't put the "deploy" button on the screen when the agent is still writing code.
+**技术3：KV 缓存局部性保持（KV-cache locality preservation）**
+压缩时，保持结构稳定：
+- 系统 prompt：始终在位置0，永不修改
+- Agent file 内容：始终在位置1，永不修改
+- 压缩后的历史：始终在相同的结构槽位
+- 活跃的工作 context：始终在末尾
+
+在位置之间移动内容会破坏 KV 缓存并增加成本。
+
+**简单版本**：增量压缩，尽可能外化到文件，保持 context 结构稳定以使缓存正常工作。
 
 ---
 
-## Step 4: Refined Explanation
+### 盲区3：背压（Backpressure）
 
-### The Advanced Context Engineering Stack
+**问题**：在 Agent context 中，背压是什么？
+
+**解答**（[HumanLayer — Context-Efficient Backpressure](https://www.humanlayer.dev/blog/context-efficient-backpressure)）：
+
+在分布式系统中，背压是当消费者跟不上时减慢生产者速度的机制。在 context engineering 中，背压是防止 Agent 产生比它能有效使用的更多 context 的 harness 机制。
+
+需要背压的症状：
+- Agent 在进行探索性搜索，填满了 context 但没有对任务做出贡献
+- 工具调用返回大量输出，Agent 读取了但没有使用
+- Agent 生成了冗长的推理但没有导向行动
+
+背压技术：
+1. **工具输出上限（Tool output caps）**——工具最多返回N行；如果需要更多，Agent 必须明确请求
+2. **搜索结果过滤（Search result filtering）**——不要返回100条搜索结果；返回10条带摘要的结果
+3. **强制检查点（Forced checkpoints）**——在N次工具调用后，Agent 必须在继续之前摘要进度
+4. **Token 预算信号（Token budget signals）**——明确告诉 Agent 剩余多少 context 预算
+
+**简单版本**：如果你的 Agent 在噪声上消耗 context，harness 需要减慢噪声产生速度，而不仅仅是事后清理。
+
+---
+
+### 盲区4：工具屏蔽（Tool Masking）
+
+**问题**：什么是工具屏蔽？
+
+**解答**（[Manus — Context Engineering](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus)）：
+
+工具屏蔽是在当前任务阶段与工具不相关时，将工具从 Agent 的 context 中隐藏的实践。
+
+示例：
+```
+阶段：规划（Planning）
+  可用工具：read_file, list_directory, search_code
+  屏蔽工具：write_file, run_tests, deploy（从 context 中隐藏）
+
+阶段：实现（Implementation）
+  可用工具：read_file, write_file, run_tests
+  屏蔽工具：deploy, send_email（从 context 中隐藏）
+
+阶段：验证（Verification）
+  可用工具：run_tests, read_file
+  屏蔽工具：write_file, deploy（从 context 中隐藏）
+```
+
+好处：
+- 减少 Agent 推理的 context 空间
+- 防止 Agent 采取过早的行动（无法调用不可见的工具）
+- 缩小决策空间 → 在可用空间中做出更好的决策
+
+**简单版本**：当 Agent 还在写代码时，不要把"部署"按钮放在屏幕上。
+
+---
+
+## 第四步：精炼解释
+
+### 进阶 Context Engineering 技术栈
 
 ```
-Level 1 — Basic (Lecture 2):
-  Keep important things, summarize the rest, handoff artifacts
+第1级 — 基础（第2讲）：
+  保留重要内容，摘要其余的，交接制品
 
-Level 2 — Intermediate:
-  Proactive compression, filesystem memory, structured slots
+第2级 — 中级：
+  主动压缩，文件系统记忆，结构化槽位
 
-Level 3 — Advanced (this lecture):
-  KV-cache locality, tool masking, backpressure, phase-aware context
+第3级 — 进阶（本讲）：
+  KV 缓存局部性，工具屏蔽，背压，阶段感知 context
 
-Level 4 — Production:
-  Automated compression pipelines, context quality metrics,
-  A/B testing context strategies, compression eval suite
+第4级 — 生产级：
+  自动化压缩管道，context 质量指标，
+  A/B 测试 context 策略，压缩 eval 套件
 ```
 
-### Context as a First-Class Resource
+### Context 作为一等资源
 
-Production harnesses treat context like money — every token has a cost, and you budget deliberately:
+生产级 harness 将 context 视为金钱——每个 token 都有成本，你要刻意制定预算：
 
 ```
-Context Budget: 200k tokens
+Context 预算：200k tokens
 
-Fixed costs (non-negotiable):
-  System prompt:           3k tokens
-  Agent file (CLAUDE.md):  2k tokens
-  Current task goal:       0.5k tokens
-  Total fixed:             5.5k tokens
+固定成本（不可协商）：
+  系统 prompt：           3k tokens
+  Agent file（CLAUDE.md）：2k tokens
+  当前任务目标：          0.5k tokens
+  固定成本合计：          5.5k tokens
 
-Variable budget: 194.5k tokens remaining
+可变预算：194.5k tokens 剩余
 
-Allocation:
-  Active working context:  40k  (20%)
-  Tool results (filtered): 60k  (30%)
-  Compressed history:      94.5k (50%)
+分配：
+  活跃工作 context：      40k  (20%)
+  工具结果（过滤后）：    60k  (30%)
+  压缩后的历史：          94.5k (50%)
 ```
 
-When you approach a budget limit, you compress the most compressible thing first (old history), not the most important thing.
+当你接近预算限制时，先压缩最容易压缩的东西（旧历史），而不是最重要的东西。
 
-### Key Takeaways
+### 核心要点
 
-1. Compress proactively at 70-80%, not reactively at 100%.
-2. Externalize stable information to files — context is for active reasoning, not storage.
-3. Tool masking limits the decision space — agents make better decisions with fewer irrelevant options.
-4. Backpressure prevents context flooding — slow down noise production at the source.
-
----
-
-### 30-Second Elevator Pitch
-
-> "Advanced context engineering is cache management for AI. Budget deliberately, compress proactively, externalize to files, mask irrelevant tools, and apply backpressure before the window floods."
+1. 在70-80%时主动压缩，而不是在100%时被动响应。
+2. 将稳定信息外化到文件——context 用于活跃推理，不用于存储。
+3. 工具屏蔽限制了决策空间——Agent 在选项更少时做出更好的决策。
+4. 背压防止 context 泛滥——在源头减慢噪声产生。
 
 ---
 
-## 🧪 Practice 10
+### 30秒电梯演讲
 
-**Engineering exercise**:
-
-**Part A — Compression policy**: Write a concrete compression policy for an agent that's refactoring a large codebase. Be specific:
-- What triggers compression (threshold + conditions)?
-- What is ALWAYS kept verbatim?
-- What is summarized (and how — one sentence per X lines)?
-- What is dropped entirely?
-
-**Part B — Backpressure scenario**: Your agent is searching the codebase for usages of a deprecated function. It runs 15 search calls, each returning 200 lines of results. By the time it's done searching, it's used 40% of the context window on search results it probably won't re-read.
-
-Design a backpressure mechanism: How would you change the tool or the harness to prevent this?
-
-**Part C — Tool masking design**: Design a 3-phase tool masking strategy for a "write a new feature" task:
-- Phase 1: Understanding (reading and planning)
-- Phase 2: Implementation (writing code)
-- Phase 3: Verification (testing and review)
-
-For each phase, list which tools are visible and which are masked.
+> "进阶 context engineering 是 AI 的缓存管理。刻意制定预算，主动压缩，外化到文件，屏蔽无关工具，在 window 泛滥前施加背压。"
 
 ---
 
-## Further Reading
+## 🧪 实践 10
 
-- [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic on the context window as working memory budget
-- [Context Engineering for AI Agents: Lessons from Building Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) — KV-cache locality, tool masking, filesystem memory
-- [OpenHands Context Condensation](https://openhands.dev/blog/openhands-context-condensensation-for-more-efficient-ai-agents) — Bounded conversation memory design
-- [Advanced Context Engineering for Coding Agents](https://www.humanlayer.dev/blog/advanced-context-engineering) — Reducing context drift
-- [Context-Efficient Backpressure for Coding Agents](https://www.humanlayer.dev/blog/context-efficient-backpressure) — Preventing low-value context consumption
-- [Context Engineering for Coding Agents (Thoughtworks)](https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html) — Shaping the task environment
+**工程练习**：
+
+**A部分——压缩策略**：为正在重构大型代码库的 Agent 编写具体的压缩策略。要具体说明：
+- 什么触发压缩（阈值 + 条件）？
+- 什么**始终**逐字保留？
+- 什么被摘要化（如何——每X行一句话）？
+- 什么被完全丢弃？
+
+**B部分——背压场景**：你的 Agent 正在搜索代码库中某个已废弃函数的用法。它运行了15次搜索，每次返回200行结果。搜索完成时，它已经用了40%的 context window 来存放可能不会再重读的搜索结果。
+
+设计一个背压机制：你将如何改变工具或 harness 来防止这种情况？
+
+**C部分——工具屏蔽设计**：为"编写新功能"任务设计一个3阶段的工具屏蔽策略：
+- 阶段1：理解（读取和规划）
+- 阶段2：实现（编写代码）
+- 阶段3：验证（测试和审查）
+
+对于每个阶段，列出哪些工具可见，哪些被屏蔽。
 
 ---
 
-*← [Lecture 9: Tool Design](./lecture-09-tool-design.md)*
-*→ [Lecture 11: Long-Running Apps](./lecture-11-long-running-apps.md)*
+## 延伸阅读
+
+- [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic 将 context window 视为工作记忆预算
+- [Context Engineering for AI Agents: Lessons from Building Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) — KV 缓存局部性、工具屏蔽、文件系统记忆
+- [OpenHands Context Condensation](https://openhands.dev/blog/openhands-context-condensensation-for-more-efficient-ai-agents) — 有界对话记忆设计
+- [Advanced Context Engineering for Coding Agents](https://www.humanlayer.dev/blog/advanced-context-engineering) — 减少 context 漂移
+- [Context-Efficient Backpressure for Coding Agents](https://www.humanlayer.dev/blog/context-efficient-backpressure) — 防止低价值 context 消耗
+- [Context Engineering for Coding Agents (Thoughtworks)](https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html) — 塑造任务环境
+
+---
+
+*← [第9讲：工具设计](./lecture-09-tool-design.md)*
+*→ [第11讲：长任务应用](./lecture-11-long-running-apps.md)*

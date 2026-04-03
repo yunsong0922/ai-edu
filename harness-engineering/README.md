@@ -1,72 +1,70 @@
-# 🎓 Harness Engineering: A Feynman Lecture Series
+# 🎓 Harness Engineering（驾驭工程）：Feynman 系列讲义
 
-> Based on: [walkinglabs/awesome-harness-engineering](https://github.com/walkinglabs/awesome-harness-engineering)
+> 基于：[walkinglabs/awesome-harness-engineering](https://github.com/walkinglabs/awesome-harness-engineering)
 
-This is a self-paced course on **Harness Engineering** — the practice of shaping the environment around AI agents so they work reliably.
+这是一套关于 **Harness Engineering（驾驭工程）** 的自学课程——即通过塑造 AI Agent 周围的环境，使其可靠地完成工作的实践。
 
-Using the **Feynman Technique**: explain simply → find gaps → fill gaps → explain better.
-
----
-
-## What is Harness Engineering?
-
-When you give an AI agent a task like "build me this app," the *model* is only half the equation. The other half is everything *around* the model: the instructions, the memory, the tools, the guardrails, the checkpoints.
-
-That "everything around" is the **harness**.
-
-> Harness engineering sits at the intersection of context engineering, evaluation, observability, orchestration, safe autonomy, and software architecture.
+学习方法采用 **Feynman 技巧（费曼学习法）**：简单解释 → 识别盲区 → 填补盲区 → 精炼解释。
 
 ---
 
-**The central insight**: Better harnesses beat better models — consistently, measurably, and repeatably.
+## 什么是 Harness Engineering？
+
+当你让一个 AI Agent 去"帮我做这个 App"时，模型（Model）只是等式的一半。另一半是模型*周围的一切*：指令、记忆、工具、护栏（guardrails）、检查点（checkpoints）。
+
+那个"周围的一切"，就是 **harness（驾具）**。
+
+> Harness engineering 处于 context engineering（上下文工程）、evaluation（评估）、observability（可观测性）、orchestration（编排）、safe autonomy（安全自主性）和软件架构的交叉点。
+
+**核心洞见**：更好的 harness 胜过更好的模型——持续地、可测量地、可重现地。
 
 ---
 
-## Course Structure (12 Lectures)
+## 课程结构（12 讲）
 
-| # | File | Topic | Analogy | Core Insight |
-|---|------|--------|---------|-------------|
-| 1 | [lecture-01](./lecture-01-what-is-a-harness.md) | What is a Harness? | 🐕 Training a dog | Model is one component; harness is everything else |
-| 2 | [lecture-02](./lecture-02-context-and-memory.md) | Context & Memory | 🧠 Whiteboard with sticky notes | Context window = RAM; manage it deliberately |
-| 3 | [lecture-03](./lecture-03-constraints-and-safe-autonomy.md) | Constraints & Safe Autonomy | 🚗 Mountain road guardrails | Guardrails enable speed; constraints aren't restrictions |
-| 4 | [lecture-04](./lecture-04-specs-agent-files-workflow.md) | Specs, Agent Files & Workflow | 📋 Employee handbook | Persistent instructions; CLAUDE.md is the onboarding doc |
-| 5 | [lecture-05](./lecture-05-evals-and-observability.md) | Evals & Observability | 🏥 Doctor's checkup | Measure harness quality, not just model quality |
-| 6 | [lecture-06](./lecture-06-benchmarks.md) | Benchmarks | 🏁 Race car design vs. engine | Same model, better harness = better benchmark scores |
-| 7 | [lecture-07](./lecture-07-runtimes-and-implementations.md) | Runtimes & Reference Implementations | 🏗️ Kitchen vs. recipe | Durable runtime is what makes harnesses production-grade |
-| 8 | [lecture-08](./lecture-08-multi-agent-systems.md) | Multi-Agent Systems | 🎭 Film production crew | Structured artifacts + role separation = coordination |
-| 9 | [lecture-09](./lecture-09-tool-design.md) | Tool Design | 🔧 Well-designed API | One tool, one action; bad interfaces cause systematic errors |
-| 10 | [lecture-10](./lecture-10-context-engineering-advanced.md) | Context Engineering Advanced | 💻 Virtual memory management | Compress proactively, mask tools, apply backpressure |
-| 11 | [lecture-11](./lecture-11-long-running-apps.md) | Long-Running Applications | 🏗️ Skyscraper construction shifts | init.sh + feature lists + handoff artifacts = coherence |
-| 12 | [lecture-12](./lecture-12-production-harness-capstone.md) | Production Harness Capstone | 🏭 Factory production line | All pillars integrated; maturity model to assess progress |
-
----
-
-## The Harness Maturity Model
-
-| Level | What Exists | Outcome |
-|-------|-------------|---------|
-| 0 — None | Raw model API calls | Inconsistent, unreliable |
-| 1 — Basic Instructions | CLAUDE.md + basic tools | More consistent |
-| 2 — Context-Managed | Compression + handoff artifacts | Long tasks viable |
-| 3 — Evaluated | Evals + trace logging + self-verification | Quality measurable |
-| 4 — Controlled Autonomy | Permission matrix + sandboxing + human checkpoints | Safe for real side effects |
-| 5 — Production-Grade | All of above + durable execution + multi-agent + benchmarks | Reliable at scale |
+| # | 文件 | 主题 | 类比 | 核心洞见 |
+|---|------|------|------|---------|
+| 1 | [第1讲](./lecture-01-what-is-a-harness.md) | 什么是 Harness？ | 🐕 训练一只狗 | 模型只是一个组件；harness 是其他一切 |
+| 2 | [第2讲](./lecture-02-context-and-memory.md) | Context 与记忆 | 🧠 贴满便签的白板 | Context window = RAM；要刻意管理 |
+| 3 | [第3讲](./lecture-03-constraints-and-safe-autonomy.md) | 约束与安全自主性 | 🚗 山路护栏 | 护栏让速度更快；约束不是限制 |
+| 4 | [第4讲](./lecture-04-specs-agent-files-workflow.md) | Specs、Agent Files 与工作流设计 | 📋 员工手册 | 持久化指令；CLAUDE.md 是 onboarding 文档 |
+| 5 | [第5讲](./lecture-05-evals-and-observability.md) | Evals 与可观测性 | 🏥 体检 | 衡量 harness 质量，而不仅仅是模型质量 |
+| 6 | [第6讲](./lecture-06-benchmarks.md) | Benchmarks（基准测试） | 🏁 赛车设计 vs. 发动机 | 同一模型，更好的 harness = 更好的成绩 |
+| 7 | [第7讲](./lecture-07-runtimes-and-implementations.md) | Runtimes 与参考实现 | 🏗️ 厨房 vs. 食谱 | 持久化 runtime 是 harness 达到生产级的关键 |
+| 8 | [第8讲](./lecture-08-multi-agent-systems.md) | 多 Agent 系统 | 🎭 电影剧组 | 结构化制品（artifacts）+ 角色分离 = 协调 |
+| 9 | [第9讲](./lecture-09-tool-design.md) | 工具设计（Tool Design） | 🔧 良好设计的 API | 一个工具，一个动作；糟糕的接口导致系统性错误 |
+| 10 | [第10讲](./lecture-10-context-engineering-advanced.md) | Context Engineering 进阶 | 💻 虚拟内存管理 | 主动压缩，屏蔽工具，施加背压（backpressure） |
+| 11 | [第11讲](./lecture-11-long-running-apps.md) | 长任务应用 | 🏗️ 摩天楼建设班次 | init.sh + 功能列表 + 交接制品 = 跨会话连贯性 |
+| 12 | [第12讲](./lecture-12-production-harness-capstone.md) | 生产级 Harness 综合设计 | 🏭 工厂流水线 | 所有支柱整合；成熟度模型帮你定位现状 |
 
 ---
 
-## How to Use This Course
+## Harness 成熟度模型
 
-Each lecture follows the **Feynman format**:
-
-1. **Step 1 — Explain Simply**: Plain language. No jargon. Bright 12-year-old can follow.
-2. **Step 2 — Identify Gaps**: Honest table of what's fuzzy or unknown.
-3. **Step 3 — Fill the Gaps**: Research answers. Cite primary sources.
-4. **Step 4 — Refined Explanation**: The improved version with gaps filled.
-5. **🧪 Practice**: A hands-on exercise to test real understanding.
+| 级别 | 现状 | 结果 |
+|------|------|------|
+| 0 — 无 | 直接调用模型 API | 不一致，不可靠 |
+| 1 — 基础指令 | CLAUDE.md + 基础工具 | 更一致 |
+| 2 — Context 管理 | 压缩 + 交接制品 | 长任务可行 |
+| 3 — 已评估 | Evals + trace 日志 + 自我验证 | 质量可衡量 |
+| 4 — 受控自主 | 权限矩阵 + 沙盒 + 人工检查点 | 可用于有真实副作用的任务 |
+| 5 — 生产级 | 以上全部 + 持久化执行 + 多 Agent + 基准测试 | 规模化可靠 |
 
 ---
 
-## Key Source Material
+## 如何使用本课程
+
+每讲遵循 **Feynman 格式**：
+
+1. **第一步 — 简单解释**：用大白话，不用术语。让一个聪明的 12 岁小孩也能听懂。
+2. **第二步 — 识别盲区**：诚实地列出哪些地方还模糊、不确定。
+3. **第三步 — 填补盲区**：研究并回答每个盲区，引用一手资料。
+4. **第四步 — 精炼解释**：填补盲区后的改进版本。
+5. **🧪 实践练习**：动手练习，检验真实理解。
+
+---
+
+## 核心参考资料
 
 - [OpenAI — Harness engineering: leveraging Codex in an agent-first world](https://openai.com/index/harness-engineering/)
 - [Anthropic — Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)

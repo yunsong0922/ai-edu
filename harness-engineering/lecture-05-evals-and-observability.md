@@ -1,171 +1,171 @@
-# Lecture 5: Evals & Observability — How Do You Know It Worked?
+# 第5讲：Evals 与可观测性——你怎么知道它起效了？
 
-> **Feynman Concept**: How to measure whether your agent actually did a good job, and how to see inside its decision-making.
-
----
-
-## Step 1: Explain It Simply
-
-You send an agent to fix 10 bugs. It comes back and says "done!"
-
-Did it actually fix them? Did it break 5 other things in the process? Did it take an unnecessarily expensive path — reading 50 files when 5 would have been enough? Did it hallucinate a fix that compiles but is logically wrong?
-
-**You don't know — unless you built evaluation into your harness.**
-
-**Evals** are tests for agent behavior. Not just "does the code compile" — but: did the agent follow the right trajectory? Did it use the right tools? Did it handle the ambiguous case correctly?
-
-**Observability** is logging and tracing everything the agent does so you can understand *why* it succeeded or failed — and improve the harness systematically.
-
-### Analogy 🏥
-
-Doctor doing a health checkup: You don't just ask "do you feel okay?" You run tests — blood pressure, cholesterol, reflexes. Each test targets a specific failure mode. Agent evals are the same — each eval targets a specific reliability failure mode in your harness.
+> **费曼核心概念**：如何衡量 Agent 是否真正做了好的工作，以及如何看透它的决策过程。
 
 ---
 
-## Step 2: Identify Gaps
+## 第一步：简单解释
 
-| Gap | What I Said | What I'm Not Sure About |
-|-----|-------------|------------------------|
-| 1 | "Evals are tests for agent behavior" | How are agent evals different from regular unit tests? |
-| 2 | "Did it follow the right trajectory?" | What is trajectory-level evaluation? |
-| 3 | "Infrastructure noise" | What does this mean and why should I care? |
-| 4 | "Observability" | What specifically should I log for an agent? |
+你让 Agent 去修复10个 bug。它回来说"完成了！"
 
----
+它真的修好了吗？在此过程中有没有破坏其他5件事？它是否走了一条不必要的昂贵路径——读了50个文件，其实5个就够了？它有没有给出一个能编译但逻辑上错误的幻觉式修复？
 
-## Step 3: Fill the Gaps
+**你不知道——除非你在 harness 中内置了评估（evaluation）机制。**
 
-### Gap 1: Agent Evals vs Unit Tests
+**Evals（评估）**是对 Agent 行为的测试。不仅仅是"代码能不能编译"——而是：Agent 是否遵循了正确的轨迹？它是否使用了正确的工具？它是否正确处理了模糊情况？
 
-**The question**: My codebase already has unit tests. Why do I need evals?
+**可观测性（Observability）**是记录并追踪 Agent 所做一切的手段，让你能理解它*为什么*成功或失败——并系统性地改进 harness。
 
-**The answer** ([OpenAI — Testing Agent Skills Systematically](https://developers.openai.com/blog/eval-skills/) + [OpenHands — How to Evaluate Agent Skills](https://openhands.dev/blog/evaluating-agent-skills)):
+### 类比 🏥
 
-Unit tests check *output correctness* of a specific function.
-Agent evals check *behavioral correctness* of the agent across a task:
-
-| Dimension | Unit Test | Agent Eval |
-|-----------|-----------|-----------|
-| What it tests | One function's output | Agent's task completion |
-| Input | Deterministic inputs | Realistic task descriptions |
-| Success criterion | Return value matches expected | Task goal achieved (many valid paths) |
-| Non-determinism | None | High (agent can succeed many ways) |
-| What it reveals | Code bugs | Harness gaps, skill gaps, reasoning failures |
-
-Agent evals need **deterministic verifiers** — automated checks that confirm the task goal was achieved, independent of which path the agent took.
-
-**Simple version**: Unit tests say "this function returns 42." Evals say "the agent correctly handled the ambiguous user request and produced working, tested code."
+医生做体检：你不会只问"你感觉还好吗？"你会做检查——血压、胆固醇、反射。每项检查针对一种特定的故障模式。Agent evals 也一样——每个 eval 针对 harness 中一种特定的可靠性故障模式。
 
 ---
 
-### Gap 2: Trajectory-Level Evaluation
+## 第二步：识别盲区
 
-**The question**: What does it mean to evaluate the *trajectory*, not just the final result?
-
-**The answer** ([OpenAI — Trace Grading](https://platform.openai.com/docs/guides/trace-grading) + [LangChain — Evaluating Deep Agents](https://blog.langchain.com/evaluating-deep-agents-our-learnings/)):
-
-A trajectory is the full sequence of actions the agent took: which tools it called, in what order, with what parameters, and what it did with the results.
-
-Two agents can both pass the final test ("code works") but have very different trajectories:
-- Agent A: read 3 files → wrote the fix → ran tests → done
-- Agent B: read 50 files → rewrote 8 files → broke 2 tests → fixed them → done
-
-Same outcome. But Agent B is 10x more expensive, takes 5x longer, and introduces unnecessary churn.
-
-Trajectory-level evaluation catches:
-- **Inefficiency** — using 10 tool calls where 2 would suffice
-- **Wrong reasoning** — arriving at the right answer through invalid logic (will fail on edge cases)
-- **Harness-exploiting behavior** — finding unexpected shortcuts that don't generalize
-
-LangChain identifies three evaluation levels:
-1. **Single-step** — did this tool call produce the right result?
-2. **Full-run** — did the agent complete the task?
-3. **Multi-turn** — did the agent maintain coherent behavior across a long session?
-
-**Simple version**: The final answer isn't the only thing that matters. *How* the agent got there reveals whether it understood the problem or just got lucky.
+| 盲区 | 我的说法 | 我不确定的地方 |
+|------|---------|--------------|
+| 1 | "Evals 是对 Agent 行为的测试" | Agent evals 与普通单元测试有什么区别？ |
+| 2 | "它是否遵循了正确的轨迹？" | 什么是轨迹级别（trajectory-level）评估？ |
+| 3 | "基础设施噪声（infrastructure noise）" | 这是什么意思，为什么我应该关心？ |
+| 4 | "可观测性" | 对于一个 Agent，我应该具体记录什么？ |
 
 ---
 
-### Gap 3: Infrastructure Noise
+## 第三步：填补盲区
 
-**The question**: What is "infrastructure noise" in evals and why does it matter?
+### 盲区1：Agent Evals vs 单元测试
 
-**The answer** ([Anthropic — Quantifying infrastructure noise](https://www.anthropic.com/engineering/infrastructure-noise)):
+**问题**：我的代码库已经有单元测试了，为什么还需要 evals？
 
-Anthropic found that *runtime configuration alone* — things like temperature settings, tool timeout values, sandbox configurations — can move benchmark scores by more than many model-tier differences on leaderboards.
+**解答**（[OpenAI — Testing Agent Skills Systematically](https://developers.openai.com/blog/eval-skills/) + [OpenHands — How to Evaluate Agent Skills](https://openhands.dev/blog/evaluating-agent-skills)）：
 
-This means: if your eval environment differs from your production environment, your eval results are misleading. You might be measuring the harness, not the model. Or worse — measuring environment artifacts, not either.
+单元测试检查特定函数的*输出正确性*。  
+Agent evals 检查 Agent 在完成任务时的*行为正确性*：
 
-**Simple version**: If your eval runs in a fast sandbox but production runs on a slow network with timeouts, your eval scores are fiction. Match the eval environment to production.
+| 维度 | 单元测试 | Agent Eval |
+|------|---------|-----------|
+| 测试对象 | 单个函数的输出 | Agent 的任务完成情况 |
+| 输入 | 确定性输入 | 真实的任务描述 |
+| 成功标准 | 返回值符合预期 | 任务目标达成（可能有多条有效路径） |
+| 不确定性 | 无 | 高（Agent 可以通过多种方式成功） |
+| 揭示的问题 | 代码 bug | Harness 缺口、技能缺口、推理失败 |
+
+Agent evals 需要**确定性验证器（deterministic verifiers）**——自动检查任务目标是否达成，与 Agent 采取的路径无关。
+
+**简单版本**：单元测试说"这个函数返回42。"Evals 说"Agent 正确处理了模糊的用户请求，并产出了可运行的、经过测试的代码。"
 
 ---
 
-### Gap 4: What to Log for Observability
+### 盲区2：轨迹级别评估（Trajectory-Level Evaluation）
 
-**The question**: What specifically should I instrument in an agent harness?
+**问题**：评估*轨迹*而不仅仅是最终结果，意味着什么？
 
-**The answer** ([Anthropic — Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) + [OpenHands — Learning to Verify AI-Generated Code](https://openhands.dev/blog/20260305-learning-to-verify-ai-generated-code)):
+**解答**（[OpenAI — Trace Grading](https://platform.openai.com/docs/guides/trace-grading) + [LangChain — Evaluating Deep Agents](https://blog.langchain.com/evaluating-deep-agents-our-learnings/)）：
 
-An agent trace should capture:
+轨迹（trajectory）是 Agent 所采取动作的完整序列：调用了哪些工具、以什么顺序、带什么参数、对结果做了什么。
+
+两个 Agent 可能都通过了最终测试（"代码能运行"），但轨迹截然不同：
+- Agent A：读3个文件 → 写修复 → 运行测试 → 完成
+- Agent B：读50个文件 → 重写8个文件 → 破坏2个测试 → 修复它们 → 完成
+
+结果相同。但 Agent B 的成本是10倍，耗时5倍，并引入了不必要的大量改动。
+
+轨迹级别评估能捕获：
+- **低效**——用10次工具调用就能完成的事用了100次
+- **错误推理**——通过无效逻辑得到了正确答案（边缘案例会失败）
+- **利用 harness 的行为**——找到了不可泛化的意外捷径
+
+LangChain 定义了三个评估级别：
+1. **单步（Single-step）**——这次工具调用产出了正确结果吗？
+2. **完整运行（Full-run）**——Agent 完成任务了吗？
+3. **多轮（Multi-turn）**——Agent 在长会话中保持了连贯的行为吗？
+
+**简单版本**：最终答案不是唯一重要的事情。Agent *如何*得到答案，揭示了它是真正理解了问题，还是只是碰巧运气好。
+
+---
+
+### 盲区3：基础设施噪声（Infrastructure Noise）
+
+**问题**：Evals 中的"基础设施噪声"是什么，为什么重要？
+
+**解答**（[Anthropic — Quantifying infrastructure noise](https://www.anthropic.com/engineering/infrastructure-noise)）：
+
+Anthropic 发现，*仅运行时配置*——温度（temperature）设置、工具超时值、沙盒（sandbox）配置等——就能让基准测试分数的变化幅度，超过排行榜上许多模型层级之间的差异。
+
+这意味着：如果你的 eval 环境与生产环境不同，你的 eval 结果就会产生误导。你可能测量的是 harness，而不是模型。或者更糟——测量的是环境干扰，而不是两者。
+
+**简单版本**：如果你的 eval 在快速沙盒中运行，但生产环境在有超时的慢速网络上运行，你的 eval 分数就是虚构的。让 eval 环境与生产环境匹配。
+
+---
+
+### 盲区4：可观测性：记录什么
+
+**问题**：我应该在 Agent harness 中具体检测什么？
+
+**解答**（[Anthropic — Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) + [OpenHands — Learning to Verify AI-Generated Code](https://openhands.dev/blog/20260305-learning-to-verify-ai-generated-code)）：
+
+一份 Agent 追踪（trace）应该捕获：
 
 ```
-For each turn in the agent loop:
-  - timestamp
-  - input (what the agent was given)
-  - reasoning (if available)
+对 agent 循环中的每一轮（turn）：
+  - timestamp（时间戳）
+  - input（Agent 收到的内容）
+  - reasoning（如果可用，推理过程）
   - tool_calls: [{name, params, result, latency_ms}]
-  - output (what the agent produced)
-  - token_count (input + output)
-  - cost_usd
+  - output（Agent 产出的内容）
+  - token_count（输入 + 输出）
+  - cost_usd（成本）
 
-For the full task:
+对整个任务：
   - task_id
   - task_description
   - success: boolean
-  - success_criteria_met: [list of checks]
+  - success_criteria_met: [检查项列表]
   - total_turns
   - total_tokens
   - total_cost_usd
   - wall_clock_time_s
-  - harness_version (!)
+  - harness_version（！重要）
 ```
 
-The `harness_version` field is critical — when you improve the harness, you need to know which traces were produced by which version.
+`harness_version` 字段至关重要——当你改进 harness 时，你需要知道哪些追踪是由哪个版本产生的。
 
-**Simple version**: Log everything the agent does, what it costs, and whether it succeeded. Tag each trace with your harness version so you can measure improvements over time.
+**简单版本**：记录 Agent 做的一切、花费了多少，以及是否成功。用 harness 版本标记每条追踪，这样你就能衡量随时间的改进。
 
 ---
 
-## Step 4: Refined Explanation
+## 第四步：精炼解释
 
-### The Four Questions Every Eval Must Answer
+### 每个 Eval 必须回答的四个问题
 
-| Question | Eval Type | Example Check |
-|----------|-----------|---------------|
-| Did it complete the task? | Outcome | Do the tests pass? Does the feature work? |
-| Did it complete it correctly? | Correctness | Are there no regressions? Is the logic sound? |
-| Did it complete it efficiently? | Trajectory | How many tool calls? How many tokens? |
-| Would it work on harder cases? | Generalization | Run against 10 variants of the task |
+| 问题 | Eval 类型 | 示例检查 |
+|------|---------|---------|
+| 它完成任务了吗？ | 结果（Outcome） | 测试通过了吗？功能正常工作了吗？ |
+| 它正确完成了吗？ | 正确性（Correctness） | 有没有回归？逻辑是否合理？ |
+| 它高效完成了吗？ | 轨迹（Trajectory） | 调用了多少次工具？消耗了多少 tokens？ |
+| 在更难的情况下还能工作吗？ | 泛化（Generalization） | 对任务的10个变体运行测试 |
 
-### The Eval Pyramid
+### Eval 金字塔
 
 ```
-             ▲
-            / \
-           / E \ ← E2E / Full-run evals (expensive, slow, catch harness-level failures)
-          /─────\
-         / Multi \ ← Multi-turn evals (medium cost, catch drift and coherence failures)
-        /─────────\
-       / Unit/Step  \ ← Single-step evals (cheap, fast, catch tool-call correctness)
-      /─────────────\
+              ▲
+             / \
+            / E \ ← E2E / Full-run evals（昂贵、慢，捕获 harness 级别故障）
+           /─────\
+          / Multi \ ← Multi-turn evals（中等成本，捕获漂移和连贯性故障）
+         /─────────\
+        / Unit/Step  \ ← Single-step evals（便宜、快，捕获工具调用正确性）
+       /─────────────\
 ```
 
-Run the cheap ones continuously. Run the expensive ones on significant harness changes.
+便宜的持续运行。昂贵的在重大 harness 变更时运行。
 
-### A Minimal Eval Setup
+### 最小化 Eval 设置
 
 ```python
-# Pseudocode for a minimal agent eval
+# Agent eval 的伪代码
 
 def eval_harness(agent, task, expected_outcome):
     trace = []
@@ -189,68 +189,68 @@ def eval_harness(agent, task, expected_outcome):
     )
 ```
 
-### Key Takeaways
+### 核心要点
 
-1. Evals measure harness quality, not just model quality. Same model, better harness = better eval scores.
-2. Trajectory evaluation catches problems that outcome evaluation misses.
-3. Match your eval environment to production — infrastructure noise can be larger than model differences.
-4. Tag every trace with a harness version. That's how you measure progress.
-
----
-
-### 30-Second Elevator Pitch
-
-> "Evals answer: did it work, and is it getting better? Without them, you're flying blind — you can't distinguish a harness problem from a model problem, and you can't measure improvement."
+1. Evals 衡量 harness 质量，而不仅仅是模型质量。相同模型，更好的 harness = 更好的 eval 分数。
+2. 轨迹评估能捕获结果评估遗漏的问题。
+3. 让 eval 环境与生产环境匹配——基础设施噪声可能比模型差异更大。
+4. 用 harness 版本标记每条追踪，这是衡量进步的方式。
 
 ---
 
-## 🧪 Practice 5
+### 30秒电梯演讲
 
-**Design exercise**: Design an eval suite for the PR review agent from Practice 1.
-
-**Part A — Outcome Eval**: Write 3 concrete, verifiable success criteria for "the agent reviewed this PR correctly."  
-(Hint: each criterion must be checkable by a script, not just a human judgment.)
-
-**Part B — Trajectory Eval**: What would a "bad trajectory" look like even if the outcome is correct?  
-(Hint: think about tool call count, which files it read, token cost.)
-
-**Part C — Eval Dataset**: List 5 different PR scenarios you'd include in your eval set to make it robust.  
-(Hint: think about edge cases — empty PRs, huge PRs, PRs that break tests, PRs touching sensitive files.)
-
-**Part D — Infrastructure Match**: Your agent runs in a GitHub Actions sandbox for evals. List 2 ways the eval environment might differ from production and invalidate your eval scores.
+> "Evals 回答：它起效了吗？在变好吗？没有 evals，你是在盲飞——你无法区分 harness 问题和模型问题，也无法衡量改进。"
 
 ---
 
-## Final Integration Exercise: Putting It All Together
+## 🧪 实践 5
 
-You've now covered all 5 pillars. Design a **complete harness** for this scenario:
+**设计练习**：为实践1中的 PR Review Agent 设计一套 eval 套件。
 
-> **Task**: Build an agent that monitors your GitHub repo for new issues, triages them (assigns labels, priority), and drafts a first response.
+**A部分——结果 Eval（Outcome Eval）**：为"Agent 正确审查了这个 PR"写出3个具体的、可验证的成功标准。  
+（提示：每个标准必须可以通过脚本检查，而不仅仅是人类判断。）
 
-For each pillar, write 2-3 sentences:
+**B部分——轨迹 Eval（Trajectory Eval）**：即使结果正确，什么样的轨迹算是"坏轨迹"？  
+（提示：想想工具调用次数、它读取了哪些文件、token 成本。）
 
-| Pillar | Your Harness Design |
-|--------|-------------------|
-| **Lecture 1: What is the harness?** | What components make up this harness? |
-| **Lecture 2: Context & Memory** | What stays in context? What gets summarized? What's the handoff artifact? |
-| **Lecture 3: Constraints & Safe Autonomy** | What can it do autonomously? What requires a checkpoint? What is forbidden? |
-| **Lecture 4: Specs & Agent Files** | What goes in the `CLAUDE.md`? What spec does each issue get? |
-| **Lecture 5: Evals & Observability** | How do you know a triage was correct? What do you log? |
+**C部分——Eval 数据集**：列出你要在 eval 集中包含的5个不同的 PR 场景，使其更加健壮。  
+（提示：考虑边缘案例——空的 PR、巨大的 PR、破坏测试的 PR、涉及敏感文件的 PR。）
 
----
-
-## Further Reading
-
-- [Testing Agent Skills Systematically with Evals](https://developers.openai.com/blog/eval-skills/) — OpenAI: turning traces into repeatable evals
-- [How to Evaluate Agent Skills](https://openhands.dev/blog/evaluating-agent-skills) — OpenHands: bounded tasks, deterministic verifiers, trace review
-- [Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Anthropic: what to measure when agents have many paths to success
-- [Quantifying infrastructure noise in agentic coding evals](https://www.anthropic.com/engineering/infrastructure-noise) — Anthropic: eval environment matters
-- [Evaluating Deep Agents: Our Learnings](https://blog.langchain.com/evaluating-deep-agents-our-learnings/) — LangChain: single-step, full-run, and multi-turn eval design
-- [Improving Deep Agents with harness engineering](https://blog.langchain.com/improving-deep-agents-with-harness-engineering/) — LangChain: evidence that harness changes improve benchmark performance
-- [Trace grading](https://platform.openai.com/docs/guides/trace-grading) — OpenAI: grading agent traces directly
-- [Learning to Verify AI-Generated Code](https://openhands.dev/blog/20260305-learning-to-verify-ai-generated-code) — OpenHands: layered verification using trajectory critics
+**D部分——基础设施匹配**：你的 Agent 在 GitHub Actions 沙盒中运行 evals。列出2种 eval 环境可能与生产环境不同、从而使 eval 分数失效的方式。
 
 ---
 
-*← [Lecture 4: Specs, Agent Files & Workflow Design](./lecture-04-specs-agent-files-workflow.md)*
-*→ Back to [Course Overview](./README.md)*
+## 综合练习：整合所有内容
+
+你已经覆盖了所有5个支柱。为以下场景设计一个**完整的 harness**：
+
+> **任务**：构建一个 Agent，监控你的 GitHub 仓库中的新 issue，对其进行分类（分配标签、优先级），并起草第一条回复。
+
+对于每个支柱，写2-3句话：
+
+| 支柱 | 你的 Harness 设计 |
+|------|-----------------|
+| **第1讲：什么是 harness？** | 这个 harness 由哪些组件组成？ |
+| **第2讲：Context 与记忆** | 什么保留在 context 中？什么被摘要？交接制品（handoff artifact）是什么？ |
+| **第3讲：约束与安全自主性** | 它可以自主做什么？什么需要检查点？什么是被禁止的？ |
+| **第4讲：Specs 与 Agent Files** | `CLAUDE.md` 中放什么？每个 issue 获得什么 spec？ |
+| **第5讲：Evals 与可观测性** | 你怎么知道一次分类是正确的？你记录什么？ |
+
+---
+
+## 延伸阅读
+
+- [Testing Agent Skills Systematically with Evals](https://developers.openai.com/blog/eval-skills/) — OpenAI：将追踪转化为可重复的 evals
+- [How to Evaluate Agent Skills](https://openhands.dev/blog/evaluating-agent-skills) — OpenHands：有界任务、确定性验证器、追踪审查
+- [Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Anthropic：当 Agent 有多条成功路径时，衡量什么
+- [Quantifying infrastructure noise in agentic coding evals](https://www.anthropic.com/engineering/infrastructure-noise) — Anthropic：eval 环境很重要
+- [Evaluating Deep Agents: Our Learnings](https://blog.langchain.com/evaluating-deep-agents-our-learnings/) — LangChain：单步、完整运行和多轮 eval 设计
+- [Improving Deep Agents with harness engineering](https://blog.langchain.com/improving-deep-agents-with-harness-engineering/) — LangChain：证据表明 harness 改变能提升基准成绩
+- [Trace grading](https://platform.openai.com/docs/guides/trace-grading) — OpenAI：直接对 Agent 追踪打分
+- [Learning to Verify AI-Generated Code](https://openhands.dev/blog/20260305-learning-to-verify-ai-generated-code) — OpenHands：使用轨迹批评者进行分层验证
+
+---
+
+*← [第4讲：Specs、Agent Files 与工作流设计](./lecture-04-specs-agent-files-workflow.md)*
+*→ 返回[课程概览](./README.md)*

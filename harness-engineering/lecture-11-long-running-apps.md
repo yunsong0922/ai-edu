@@ -1,283 +1,283 @@
-# Lecture 11: Harness Design for Long-Running Applications
+# 第11讲：长任务应用的 Harness 设计
 
-> **Feynman Concept**: How to build harnesses that survive across many context windows, many hours, and many failure points — for tasks that a single agent session simply can't hold.
-
----
-
-## Step 1: Explain It Simply
-
-Most agent demos show a task that fits in one session: "write this function," "fix this bug," "summarize this document."
-
-Real software projects don't work like that. Building a full application — or even a significant feature — might take hundreds of tool calls, touch dozens of files, and span multiple days. No context window holds that.
-
-The naive approach: just keep going until the context is full, then start over and hope the model remembers what it did.
-
-The engineering approach: **design the harness so tasks can be paused, resumed, and handed off cleanly** — with no loss of progress and no drift from the original goal.
-
-### Analogy 🏗️
-
-Building a skyscraper: No single work shift builds a skyscraper. Each shift starts with a **site report** (what was done, what's in progress, what's next), works within defined zones, and ends with a **handover document** for the next shift. The harness is the project management system that makes this multi-shift work coherent.
+> **费曼核心概念**：如何构建能在多个 context window、多小时、多个故障点中存活的 harness——用于单个 Agent 会话根本无法承载的任务。
 
 ---
 
-## Step 2: Identify Gaps
+## 第一步：简单解释
 
-| Gap | What I Said | What I'm Not Sure About |
-|-----|-------------|------------------------|
-| 1 | "Pause, resume, hand off cleanly" | What are the concrete mechanisms Anthropic uses? |
-| 2 | "init.sh" | What is this and what does it do? |
-| 3 | "Feature list" | How does a harness use a feature list to manage a long task? |
-| 4 | "Self-verification" | How does an agent verify its own work before handing off? |
+大多数 Agent 演示展示的是能在一个会话中完成的任务："编写这个函数"、"修复这个 bug"、"摘要这个文档"。
+
+真实的软件项目不是这样运作的。构建一个完整的应用——甚至是一个重要的功能——可能需要数百次工具调用、涉及数十个文件，并跨越多天。没有任何 context window 能容纳这些。
+
+朴素的做法：一直运行直到 context 满了，然后重新开始，希望模型能记住它做了什么。
+
+工程化的做法：**设计 harness，使任务可以被暂停、恢复和干净地交接**——不丢失任何进度，不偏离原始目标。
+
+### 类比 🏗️
+
+摩天楼建设：没有任何一个工作班次能建完一栋摩天楼。每个班次以**现场报告**开始（完成了什么、正在进行什么、接下来是什么），在明确划定的区域内工作，并以**交接文档**结束，供下一个班次使用。Harness 就是使这种多班次工作连贯的项目管理系统。
 
 ---
 
-## Step 3: Fill the Gaps
+## 第二步：识别盲区
 
-### Gap 1: Concrete Mechanisms for Long-Running Agents
+| 盲区 | 我的说法 | 我不确定的地方 |
+|------|---------|--------------|
+| 1 | "暂停、恢复、干净地交接" | Anthropic 使用的具体机制是什么？ |
+| 2 | "init.sh" | 这是什么，它做什么？ |
+| 3 | "功能列表（feature list）" | Harness 如何使用功能列表来管理长任务？ |
+| 4 | "自我验证（self-verification）" | Agent 在交接前如何验证自己的工作？ |
 
-**The answer** ([Anthropic — Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)):
+---
 
-Anthropic's multi-context-window design uses three interlocking mechanisms:
+## 第三步：填补盲区
 
-**1. Initializer Agent**
-A separate, lightweight agent that runs at the start of each context window. Its job:
-- Read the current task state artifact
-- Establish the context for the new window (what was done, what's next)
-- Initialize the working environment (correct files loaded, tools configured)
-- Hand off to the main implementation agent
+### 盲区1：长时间运行 Agent 的具体机制
 
-The initializer prevents each window from "starting cold" — it bootstraps continuity.
+**解答**（[Anthropic — Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)）：
 
-**2. Handoff Artifacts**
-At the end of each context window, the agent writes a structured document:
+Anthropic 的多 context window 设计使用三个相互锁定的机制：
+
+**1. 初始化 Agent（Initializer Agent）**
+一个在每个 context window 开始时运行的独立、轻量级 Agent。它的职责：
+- 读取当前任务状态制品
+- 为新 window 建立 context（完成了什么、接下来是什么）
+- 初始化工作环境（加载正确的文件，配置工具）
+- 交接给主实现 Agent
+
+初始化 Agent 防止每个 window"冷启动"——它引导连续性。
+
+**2. 交接制品（Handoff Artifacts）**
+在每个 context window 结束时，Agent 写出一个结构化文档：
 ```markdown
-# Task Handoff: Auth Module Refactor
-## Completed
-- Extracted UserValidator class (src/auth/UserValidator.ts)
-- Updated 12 call sites (see: task/completed-sites.txt)
-- Tests passing: auth.test.ts, validator.test.ts
+# 任务交接：Auth 模块重构
+## 已完成
+- 提取了 UserValidator 类（src/auth/UserValidator.ts）
+- 更新了12个调用点（参见：task/completed-sites.txt）
+- 测试通过：auth.test.ts, validator.test.ts
 
-## In Progress
-- Call site update: src/api/routes/orders.ts (line 47)
-- Partially updated, needs: replace validateUser() with UserValidator.validate()
+## 进行中
+- 调用点更新：src/api/routes/orders.ts（第47行）
+- 已部分更新，需要：将 validateUser() 替换为 UserValidator.validate()
 
-## Next Steps
-1. Complete orders.ts update
-2. Update src/api/routes/payments.ts (similar pattern)
-3. Run full test suite
+## 后续步骤
+1. 完成 orders.ts 更新
+2. 更新 src/api/routes/payments.ts（类似模式）
+3. 运行完整测试套件
 
-## Constraints Still Active
-- Do not modify legacy/ directory
-- All changes must maintain backward compatibility with v1 API
+## 仍然有效的约束
+- 不要修改 legacy/ 目录
+- 所有更改必须保持与 v1 API 的向后兼容性
 
-## Files Modified
-[list of all files touched so far]
+## 已修改的文件
+[迄今为止所有已接触文件的列表]
 ```
 
-**3. Orchestrator**
-An external orchestrator that manages the multi-window lifecycle:
-- Triggers a new context window when the current one is exhausted
-- Passes the handoff artifact to the initializer
-- Monitors overall progress
-- Detects if an agent is looping or stuck
-- Handles escalation to human review
+**3. 编排者（Orchestrator）**
+管理多 window 生命周期的外部编排者：
+- 当当前 window 耗尽时触发新的 context window
+- 将交接制品传递给初始化 Agent
+- 监控整体进度
+- 检测 Agent 是否在循环或卡住
+- 处理升级到人工审查
 
 ---
 
-### Gap 2: init.sh
+### 盲区2：init.sh
 
-**The question**: What is `init.sh` in the context of long-running agent harnesses?
+**问题**：在长时间运行 Agent harness 的 context 中，`init.sh` 是什么？
 
-**The answer** (Anthropic's harness engineering articles):
+**解答**（Anthropic 的 harness engineering 文章）：
 
-`init.sh` is a shell script that the harness runs before the agent starts work. It prepares the environment to a known state:
+`init.sh` 是 harness 在 Agent 开始工作之前运行的 shell 脚本。它将环境准备到已知状态：
 
 ```bash
 #!/bin/bash
-# init.sh — Run before every agent session
+# init.sh — 在每次 agent 会话前运行
 
-# Ensure clean working state
+# 确保干净的工作状态
 git status --porcelain
 if [ ! -z "$(git status --porcelain)" ]; then
-  echo "WARNING: Uncommitted changes detected"
+  echo "WARNING: 检测到未提交的更改"
 fi
 
-# Install dependencies (idempotent)
+# 安装依赖（幂等）
 npm install --silent
 
-# Run baseline tests to establish starting state
+# 运行基线测试以建立起始状态
 npm test --silent 2>&1 | tail -5
 
-# Validate required files exist
-[ -f "TASK_STATUS.md" ] || echo "No task status found — starting fresh"
-[ -f "CLAUDE.md" ] || { echo "ERROR: CLAUDE.md missing"; exit 1; }
+# 验证所需文件存在
+[ -f "TASK_STATUS.md" ] || echo "未找到任务状态——从头开始"
+[ -f "CLAUDE.md" ] || { echo "ERROR: CLAUDE.md 缺失"; exit 1; }
 
-# Report environment state
-echo "Environment ready. Node: $(node --version)"
-echo "Tests passing: $(npm test 2>&1 | grep 'Tests:' | tail -1)"
+# 报告环境状态
+echo "环境就绪。Node: $(node --version)"
+echo "测试通过：$(npm test 2>&1 | grep 'Tests:' | tail -1)"
 ```
 
-This means every agent session starts with:
-- Known dependency state
-- Baseline test results (so the agent knows what was already failing)
-- Validated required files
-- No surprise environment divergence
+这意味着每次 Agent 会话都以以下内容开始：
+- 已知的依赖状态
+- 基线测试结果（这样 Agent 就知道什么是已经失败的）
+- 已验证的所需文件
+- 没有意外的环境差异
 
-**Simple version**: `init.sh` is the pre-flight checklist. You run it before every session to guarantee a known starting state.
+**简单版本**：`init.sh` 是起飞前检查清单。在每次会话前运行它，保证已知的起始状态。
 
 ---
 
-### Gap 3: Feature Lists as Task State
+### 盲区3：功能列表作为任务状态
 
-**The question**: How does a harness use a feature list to manage long tasks?
+**问题**：Harness 如何使用功能列表来管理长任务？
 
-**The answer** (Anthropic long-running harness articles):
+**解答**（Anthropic 长时间运行 harness 文章）：
 
-Instead of tracking progress in the agent's context (which gets lost), the harness maintains an **external feature list** — a file in the repo that tracks task state persistently:
+不在 Agent 的 context 中追踪进度（这会丢失），harness 维护一个**外部功能列表（external feature list）**——仓库中持久追踪任务状态的文件：
 
 ```markdown
 # feature-list.md
 
-## Status Key
-- [ ] Not started
-- [~] In progress  
-- [x] Complete
-- [!] Blocked — needs human review
+## 状态说明
+- [ ] 未开始
+- [~] 进行中
+- [x] 完成
+- [!] 阻塞——需要人工审查
 
-## Auth Module Refactor
+## Auth 模块重构
 
-### Phase 1: Extract Validator
-- [x] Create UserValidator class
-- [x] Write unit tests
-- [x] Update auth routes
+### 第1阶段：提取 Validator
+- [x] 创建 UserValidator 类
+- [x] 编写单元测试
+- [x] 更新 auth 路由
 
-### Phase 2: Update Call Sites
+### 第2阶段：更新调用点
 - [x] src/api/routes/auth.ts
-- [~] src/api/routes/orders.ts (in progress)
+- [~] src/api/routes/orders.ts（进行中）
 - [ ] src/api/routes/payments.ts
 - [ ] src/api/routes/admin.ts
-- [!] src/legacy/old-auth.ts (blocked: do not modify)
+- [!] src/legacy/old-auth.ts（阻塞：禁止修改）
 
-### Phase 3: Cleanup
-- [ ] Remove deprecated validateUser() function
-- [ ] Update API documentation
-- [ ] Run full regression suite
+### 第3阶段：清理
+- [ ] 移除已废弃的 validateUser() 函数
+- [ ] 更新 API 文档
+- [ ] 运行完整回归测试套件
 ```
 
-The agent reads this file at session start (via the initializer), updates it as it works, and leaves it updated in the handoff. The orchestrator reads it to know overall progress.
+Agent 在会话开始时（通过初始化 Agent）读取此文件，工作时更新它，并在交接时将其更新后留下。编排者读取它以了解整体进度。
 
-**Simple version**: The feature list is a shared task board that persists across context windows. It's how the whole multi-window task stays coherent.
+**简单版本**：功能列表是跨 context window 持久存在的共享任务板。这就是整个多 window 任务保持连贯的方式。
 
 ---
 
-### Gap 4: Self-Verification Before Handoff
+### 盲区4：交接前的自我验证
 
-**The question**: How does an agent verify its own work before ending its context window?
+**问题**：Agent 在结束其 context window 之前如何验证自己的工作？
 
-**The answer** (Anthropic harness design + [Thoughtworks — Assessing internal quality](https://martinfowler.com/articles/exploring-gen-ai/ccmenu-quality.html)):
+**解答**（Anthropic harness 设计 + [Thoughtworks — Assessing internal quality](https://martinfowler.com/articles/exploring-gen-ai/ccmenu-quality.html)）：
 
-Before writing the handoff artifact, the agent runs its own verification checklist:
+在写交接制品之前，Agent 运行自己的验证清单：
 
 ```
-SELF-VERIFICATION PROTOCOL (run before every handoff):
+自我验证协议（在每次交接前运行）：
 
-1. Tests:
-   - Run: npm test
-   - Check: no new failures vs. baseline
-   - If new failures: fix before handoff, or mark as [!] blocked
+1. 测试：
+   - 运行：npm test
+   - 检查：与基线相比没有新的失败
+   - 如果有新的失败：在交接前修复，或标记为 [!] 阻塞
 
-2. Scope check:
-   - List all files modified
-   - Verify no files outside assigned scope were touched
-   - Verify no .env files, legacy/ files, etc. were touched
+2. 范围检查：
+   - 列出所有已修改的文件
+   - 验证没有触碰到分配范围之外的文件
+   - 验证没有触碰 .env 文件、legacy/ 文件等
 
-3. Consistency check:
-   - Are there any half-finished changes? (partial refactors, commented-out code)
-   - If yes: complete or revert — no half-finished work in handoff
+3. 一致性检查：
+   - 是否有半完成的更改？（部分重构、注释掉的代码）
+   - 如果有：完成或回滚——交接中不留半完成的工作
 
-4. Feature list update:
-   - Mark completed items as [x]
-   - Mark in-progress items as [~] with current status
-   - Note any newly discovered blockers as [!]
+4. 功能列表更新：
+   - 将已完成的项目标记为 [x]
+   - 将进行中的项目标记为 [~] 并注明当前状态
+   - 将新发现的阻塞项记录为 [!]
 
-5. Write handoff artifact
+5. 写交接制品
 ```
 
-**Simple version**: The agent is its own quality gate. Before it hands off, it runs the checks a human would run.
+**简单版本**：Agent 是自己的质量关卡。在交接之前，它运行人类会运行的检查。
 
 ---
 
-## Step 4: Refined Explanation
+## 第四步：精炼解释
 
-### The Long-Running Harness Architecture
+### 长任务 Harness 架构
 
 ```
-Session 1                    Session 2                    Session 3
+会话1                      会话2                      会话3
 ┌─────────────────┐          ┌─────────────────┐          ┌─────────────────┐
 │  init.sh        │          │  init.sh        │          │  init.sh        │
-│  Read task state│          │  Read handoff   │          │  Read handoff   │
+│  读取任务状态    │          │  读取交接内容    │          │  读取交接内容    │
 │  ↓              │          │  ↓              │          │  ↓              │
-│  Agent works    │          │  Agent works    │          │  Agent works    │
+│  Agent 工作      │          │  Agent 工作      │          │  Agent 工作      │
 │  ↓              │          │  ↓              │          │  ↓              │
-│  Self-verify    │          │  Self-verify    │          │  Self-verify    │
+│  自我验证        │          │  自我验证        │          │  自我验证        │
 │  ↓              │ ──────→  │  ↓              │ ──────→  │  ↓              │
-│  Write handoff  │ handoff  │  Write handoff  │ handoff  │  Write handoff  │
-└─────────────────┘ artifact └─────────────────┘ artifact └─────────────────┘
+│  写交接制品      │ 交接制品  │  写交接制品      │ 交接制品  │  写交接制品      │
+└─────────────────┘          └─────────────────┘          └─────────────────┘
          ↑ ↑                          ↑ ↑                          ↑ ↑
          │ └── feature-list.md ───────┘ └── feature-list.md ───────┘
-         └──── CLAUDE.md (always present, never modified)
+         └──── CLAUDE.md（始终存在，永不修改）
 ```
 
-### What Goes in Each Artifact
+### 每个制品中包含什么
 
-| Artifact | Updated by | Read by | Contains |
-|----------|-----------|---------|----------|
-| `CLAUDE.md` | Humans (rarely) | Every session | Permanent codebase rules |
-| `feature-list.md` | Agent (every turn) | Every session, orchestrator | Current task state |
-| `TASK_HANDOFF.md` | Agent (end of session) | Next session's initializer | What was done, what's next |
-| `init.sh` | Humans (setup) | Harness (before each session) | Environment prep commands |
+| 制品 | 由谁更新 | 由谁读取 | 包含内容 |
+|------|---------|---------|---------|
+| `CLAUDE.md` | 人类（极少） | 每次会话 | 永久代码库规则 |
+| `feature-list.md` | Agent（每轮） | 每次会话，编排者 | 当前任务状态 |
+| `TASK_HANDOFF.md` | Agent（会话结束） | 下次会话的初始化 Agent | 完成了什么，接下来是什么 |
+| `init.sh` | 人类（设置时） | Harness（每次会话前） | 环境准备命令 |
 
-### Key Takeaways
+### 核心要点
 
-1. Long tasks require external state — context windows don't survive across sessions.
-2. Initializer agents bootstrap each new session from a known state.
-3. Feature lists + handoff artifacts are the communication channel across context windows.
-4. `init.sh` guarantees a clean environment before each session — no surprise state divergence.
-5. Self-verification before handoff is the quality gate that prevents bad state propagation.
-
----
-
-### 30-Second Elevator Pitch
-
-> "Long-running tasks need external scaffolding: feature lists track state across sessions, handoff artifacts brief the next window, init.sh guarantees a clean start, and self-verification prevents bad state from propagating."
+1. 长任务需要外部状态——context window 无法在会话间存活。
+2. 初始化 Agent 从已知状态引导每个新会话。
+3. 功能列表 + 交接制品是跨 context window 的通信渠道。
+4. `init.sh` 在每次会话前保证干净的环境——没有意外的状态差异。
+5. 交接前的自我验证是防止不良状态传播的质量关卡。
 
 ---
 
-## 🧪 Practice 11
+### 30秒电梯演讲
 
-**System design exercise**: Design a long-running harness for this task:
-*"Migrate a codebase from JavaScript to TypeScript — 150 files, estimated 4-6 hours of work."*
-
-**Part A — init.sh**: Write the `init.sh` for this migration task. What should it check and report before each session?
-
-**Part B — Feature list**: Design the `feature-list.md` structure. How do you organize 150 files across phases? What statuses do you need?
-
-**Part C — Handoff artifact template**: Write the Markdown template for `TASK_HANDOFF.md` — what sections are required, what must always be present?
-
-**Part D — Self-verification**: What 5 checks must the agent run before writing the handoff? Be specific to a TypeScript migration (hint: type errors, test regressions, unconverted files accidentally left as .js, etc.)
-
-**Part E — Failure scenario**: Session 3 ends with 3 TypeScript errors the agent couldn't fix. How does the handoff handle this? What does the orchestrator do?
+> "长任务需要外部脚手架（scaffolding）：功能列表跨会话追踪状态，交接制品为下一个 window 做简报，init.sh 保证干净的起始，自我验证防止不良状态传播。"
 
 ---
 
-## Further Reading
+## 🧪 实践 11
 
-- [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Anthropic's core article on initializer agents, feature lists, init.sh
-- [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Anthropic follow-up on task state and evaluator design
-- [Assessing internal quality while coding with an agent](https://martinfowler.com/articles/exploring-gen-ai/ccmenu-quality.html) — Moving quality checks into the loop
-- [EvoClaw benchmark](https://openhands.dev/blog/evoclaw-benchmark) — Evaluating agents across dependent milestone sequences from real repo history
+**系统设计练习**：为以下任务设计一个长任务 harness：
+*"将代码库从 JavaScript 迁移到 TypeScript——150个文件，预计4-6小时工作量。"*
+
+**A部分——init.sh**：为这个迁移任务编写 `init.sh`。在每次会话前应该检查和报告什么？
+
+**B部分——功能列表**：设计 `feature-list.md` 结构。如何跨阶段组织150个文件？需要哪些状态？
+
+**C部分——交接制品模板**：为 `TASK_HANDOFF.md` 编写 Markdown 模板——需要哪些章节，什么必须始终存在？
+
+**D部分——自我验证**：Agent 在写交接前必须运行的5项检查是什么？要具体到 TypeScript 迁移（提示：类型错误、测试回归、意外遗留为 .js 的文件等）
+
+**E部分——故障场景**：第3次会话结束时有3个 Agent 无法修复的 TypeScript 错误。交接如何处理这种情况？编排者怎么做？
 
 ---
 
-*← [Lecture 10: Context Engineering Advanced](./lecture-10-context-engineering-advanced.md)*
-*→ [Lecture 12: Production Harness Capstone](./lecture-12-production-harness-capstone.md)*
+## 延伸阅读
+
+- [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Anthropic 关于初始化 Agent、功能列表、init.sh 的核心文章
+- [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Anthropic 关于任务状态和评估器设计的后续文章
+- [Assessing internal quality while coding with an agent](https://martinfowler.com/articles/exploring-gen-ai/ccmenu-quality.html) — 将质量检查移入循环
+- [EvoClaw benchmark](https://openhands.dev/blog/evoclaw-benchmark) — 跨真实仓库历史中依赖里程碑序列评估 Agent
+
+---
+
+*← [第10讲：Context Engineering 进阶](./lecture-10-context-engineering-advanced.md)*
+*→ [第12讲：生产级 Harness 综合设计](./lecture-12-production-harness-capstone.md)*

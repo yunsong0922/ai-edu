@@ -1,203 +1,203 @@
-# Lecture 4: Specs, Agent Files & Workflow Design
+# 第4讲：Specs、Agent Files 与工作流设计
 
-> **Feynman Concept**: How to give agents durable, structured instructions that survive across sessions and scale across teams.
-
----
-
-## Step 1: Explain It Simply
-
-You hire a contractor to renovate your kitchen. You don't follow them around all day explaining what you want. You hand them a **spec sheet**: the dimensions, the materials, the style, what NOT to touch.
-
-When agents work on a codebase, they need the same thing — a persistent document they can always refer back to. Without it, every session starts from scratch. The agent doesn't know your conventions, your sensitive files, or your preferred testing approach.
-
-**Agent files** (`CLAUDE.md`, `AGENTS.md`, `agent.md`) are that spec sheet. They live in the repo, persist across sessions, and tell the agent "this is how we do things here."
-
-### Analogy 📋
-
-Employee handbook + job description: The job description tells you *what* to do. The handbook tells you *how we do things here* — the culture, the rules, the things that got someone fired last year. Agent files are both.
+> **费曼核心概念**：如何给 Agent 提供跨会话持久存在、可在团队间规模化使用的结构化指令。
 
 ---
 
-## Step 2: Identify Gaps
+## 第一步：简单解释
 
-| Gap | What I Said | What I'm Not Sure About |
-|-----|-------------|------------------------|
-| 1 | "Persistent across sessions" | How do agent files actually get loaded? Who reads them? |
-| 2 | "CLAUDE.md vs AGENTS.md vs agent.md" | What's the actual difference between these formats? |
-| 3 | "12-Factor Agents" | What are these principles and why do they matter? |
-| 4 | "Spec-driven development" | How do specs change the agent workflow vs ad-hoc prompts? |
+你雇了一位承包商来装修厨房。你不会整天跟在他们后面解释你的需求。你会递给他们一份**规格说明书（spec sheet）**：尺寸、材料、风格，以及**不能动**的地方。
 
----
+当 Agent 在代码库中工作时，他们需要同样的东西——一份随时可以查阅的持久文档。没有它，每次会话都要从零开始。Agent 不知道你的编码规范、哪些文件敏感、或者你偏好的测试方式。
 
-## Step 3: Fill the Gaps
+**Agent files**（`CLAUDE.md`、`AGENTS.md`、`agent.md`）就是那份规格说明书。它们存在于代码仓库中，跨会话持续存在，告诉 Agent"我们在这里是这样做事的。"
 
-### Gap 1: How Agent Files Get Loaded
+### 类比 📋
 
-**The question**: When does the agent actually read `CLAUDE.md`? Is it automatic?
-
-**The answer** ([HumanLayer — Writing a good CLAUDE.md](https://www.humanlayer.dev/blog/writing-a-good-claude-md)):
-
-Claude Code automatically reads `CLAUDE.md` at the start of every session (if present in the working directory or any parent directory). The harness can also instruct the agent to read domain-specific files at task start — e.g., `"before touching any module, read ARCHITECTURE.md"`.
-
-The file must be:
-1. **Present in the repo** — not external, not ephemeral
-2. **In plain Markdown** — the agent reads it like a document
-3. **Trusted by the harness** — not just any file, but one the harness explicitly loads
-
-**Simple version**: It's like a `.bashrc` for your agent — automatically sourced on every session start.
+员工手册 + 岗位职责说明：岗位职责告诉你*做什么*。员工手册告诉你*我们在这里怎么做事*——文化、规则，以及去年因为踩了某条线被解雇的教训。Agent files 兼具两者。
 
 ---
 
-### Gap 2: CLAUDE.md vs AGENTS.md vs agent.md
+## 第二步：识别盲区
 
-**The question**: These three formats exist. What's actually different between them?
-
-**The answer**:
-
-| Format | Source | Scope | Key difference |
-|--------|--------|-------|----------------|
-| `CLAUDE.md` | Anthropic | Claude Code-specific | Tool-specific, rich support in CC |
-| `AGENTS.md` | [agentsmd/agents.md](https://github.com/agentsmd/agents.md) | Open standard, tool-agnostic | Works across Claude, Codex, Cursor, etc. |
-| `agent.md` | [agentmd/agent.md](https://github.com/agentmd/agent.md) | Related open standard | Slightly different schema, same goal |
-
-In practice: pick one, put it in your repo root, and be consistent. The content matters more than the filename.
-
-**Simple version**: Different dialects of the same language — "here's how to work in this codebase."
+| 盲区 | 我的说法 | 我不确定的地方 |
+|------|---------|--------------|
+| 1 | "跨会话持久存在" | Agent files 是如何被实际加载的？谁来读取它们？ |
+| 2 | "CLAUDE.md vs AGENTS.md vs agent.md" | 这几种格式实际有什么区别？ |
+| 3 | "12-Factor Agents" | 这些原则是什么，为什么重要？ |
+| 4 | "Spec-driven development（规格驱动开发）" | Specs 如何改变 Agent 工作流，与临时 prompts 相比有何不同？ |
 
 ---
 
-### Gap 3: 12-Factor Agents
+## 第三步：填补盲区
 
-**The question**: What are the 12-Factor Agents principles?
+### 盲区1：Agent Files 如何被加载
 
-**The answer** ([HumanLayer — 12-Factor Agents](https://www.humanlayer.dev/blog/12-factor-agents)):
+**问题**：Agent 什么时候实际读取 `CLAUDE.md`？是自动的吗？
 
-Modeled on the Twelve-Factor App manifesto for web services. Key principles for agent harness design:
+**解答**（[HumanLayer — Writing a good CLAUDE.md](https://www.humanlayer.dev/blog/writing-a-good-claude-md)）：
 
-| Factor | Principle | What it means |
-|--------|-----------|--------------|
-| Explicit prompts | No hidden context | Every instruction the agent receives is visible and auditable |
-| Stateless agents | Harness owns state | The agent doesn't accumulate state between runs — the harness does |
-| Declarative tools | Treat tools like functions | Tools are stateless, side-effect-free where possible |
-| Pause-resume | Clean interruption | The agent can be stopped and resumed from a known checkpoint |
-| Separation of concerns | Logic vs plumbing | Agent logic separate from runtime infrastructure (retries, logging) |
-| Observable | Traces everything | Every agent action is logged and inspectable |
+Claude Code 会在每次会话开始时自动读取 `CLAUDE.md`（如果它存在于工作目录或任何父目录中）。Harness 也可以指示 Agent 在任务开始时读取特定领域的文件——例如，"在触碰任何模块之前，先读取 ARCHITECTURE.md"。
 
-**Simple version**: Just like good microservices — stateless, explicit, resumable, and observable.
+该文件必须满足：
+1. **存在于代码仓库中**——不是外部的，不是临时的
+2. **使用纯 Markdown 格式**——Agent 像读文档一样读取它
+3. **被 harness 信任**——不是随便一个文件，而是 harness 明确加载的文件
+
+**简单版本**：它就像 Agent 的 `.bashrc`——在每次会话启动时自动加载。
 
 ---
 
-### Gap 4: Spec-Driven Development
+### 盲区2：CLAUDE.md vs AGENTS.md vs agent.md
 
-**The question**: How does writing a spec before the agent starts change the outcome?
+**问题**：这三种格式都存在，它们实际上有什么区别？
 
-**The answer** ([Thoughtworks — Understanding Spec-Driven-Development](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) + [GitHub Spec Kit](https://github.com/github/spec-kit)):
+**解答**：
 
-Without a spec, the agent interprets the goal ambiguously at every turn. Small misinterpretations accumulate. You end up reviewing hundreds of lines of "almost right" code.
+| 格式 | 来源 | 适用范围 | 关键区别 |
+|------|------|---------|---------|
+| `CLAUDE.md` | Anthropic | Claude Code 专用 | 工具特定，在 CC 中有丰富的支持 |
+| `AGENTS.md` | [agentsmd/agents.md](https://github.com/agentsmd/agents.md) | 开放标准，工具无关 | 兼容 Claude、Codex、Cursor 等 |
+| `agent.md` | [agentmd/agent.md](https://github.com/agentmd/agent.md) | 相关开放标准 | 略有不同的 schema，目标相同 |
 
-With a spec, the agent has an explicit reference to check its work against. Each decision point becomes: "does this satisfy the spec?" instead of "does this feel right?"
+实践中：选一个，放在代码仓库根目录，保持一致。内容比文件名更重要。
 
-[12-Factor AgentOps](https://www.12factoragentops.com/) adds an operations lens: specs also make agent workflows **reproducible** — if you can run the same spec twice and get the same outcome, you can debug, improve, and A/B test your harness.
-
-**Simple version**: Specs are like unit tests for the agent's understanding — they make "correct" concrete and measurable.
+**简单版本**：同一种语言的不同方言——"这是在这个代码库里工作的方式。"
 
 ---
 
-## Step 4: Refined Explanation
+### 盲区3：12-Factor Agents（十二要素 Agent）
 
-### What Makes a Good Agent File
+**问题**：十二要素 Agent 原则是什么？
+
+**解答**（[HumanLayer — 12-Factor Agents](https://www.humanlayer.dev/blog/12-factor-agents)）：
+
+模仿 Web 服务的十二要素应用宣言。Agent harness 设计的关键原则：
+
+| 要素 | 原则 | 含义 |
+|------|------|------|
+| 显式 prompts（Explicit prompts） | 无隐藏上下文 | Agent 收到的每条指令都是可见且可审计的 |
+| 无状态 Agent（Stateless agents） | Harness 拥有状态 | Agent 不在多次运行间积累状态——harness 负责此事 |
+| 声明式工具（Declarative tools） | 将工具视为函数 | 工具尽量是无状态、无副作用的 |
+| 暂停-恢复（Pause-resume） | 干净的中断 | Agent 可以被停止并从已知检查点（checkpoint）恢复 |
+| 关注点分离（Separation of concerns） | 逻辑 vs 管道 | Agent 逻辑与运行时基础设施（重试、日志）分离 |
+| 可观测（Observable） | 追踪一切 | 每个 Agent 动作都被记录并可检查 |
+
+**简单版本**：就像好的微服务——无状态、显式、可恢复、可观测。
+
+---
+
+### 盲区4：Spec-Driven Development（规格驱动开发）
+
+**问题**：在 Agent 开始工作之前写一份 spec，会如何改变结果？
+
+**解答**（[Thoughtworks — Understanding Spec-Driven-Development](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) + [GitHub Spec Kit](https://github.com/github/spec-kit)）：
+
+没有 spec，Agent 在每个决策点都会模糊地解读目标。细微的误解不断积累。最终你需要 review 几百行"差不多正确"的代码。
+
+有了 spec，Agent 有了一个明确的参照来验证自己的工作。每个决策点变成："这是否满足 spec？"而不是"这感觉对吗？"
+
+[12-Factor AgentOps](https://www.12factoragentops.com/) 增加了一个运营视角：spec 还让 Agent 工作流**可重现**——如果你能用同一份 spec 运行两次并获得相同结果，就能调试、改进和 A/B 测试你的 harness。
+
+**简单版本**：Specs 就像 Agent 理解力的单元测试——它们让"正确"变得具体可衡量。
+
+---
+
+## 第四步：精炼解释
+
+### 什么是好的 Agent File
 
 ```markdown
-# CLAUDE.md — Example Structure
+# CLAUDE.md — 示例结构
 
-## What This Codebase Does
-A REST API for e-commerce order management.
-Uses Node.js + Express + PostgreSQL.
+## 这个代码库是做什么的
+一个面向电商订单管理的 REST API。
+使用 Node.js + Express + PostgreSQL。
 
-## Architecture
-- /src/routes/        — HTTP route handlers (thin, delegate to services)
-- /src/services/      — Business logic (no direct DB access here)
-- /src/repositories/  — Database layer (Postgres via pg library)
-- /src/models/        — Type definitions (TypeScript interfaces)
+## 架构
+- /src/routes/        — HTTP 路由处理器（薄层，委托给 service 层）
+- /src/services/      — 业务逻辑（此处不直接访问 DB）
+- /src/repositories/  — 数据库层（通过 pg 库访问 Postgres）
+- /src/models/        — 类型定义（TypeScript interfaces）
 
-## Conventions
-- Always use the Repository pattern for DB access (never query in routes)
-- All async functions must have explicit error handling (no silent failures)
-- New endpoints require an integration test in /tests/integration/
+## 规范约定
+- 数据库访问始终使用 Repository 模式（路由层中不能直接查询）
+- 所有异步函数必须有显式的错误处理（不允许静默失败）
+- 新 endpoint 需要在 /tests/integration/ 中有集成测试
 
-## DO NOT Touch
-- /src/legacy/        — Deprecated, migration in progress (ask before any change)
-- .env files          — Never read, modify, or log these
+## 禁止触碰
+- /src/legacy/        — 已废弃，迁移进行中（任何改动前先咨询）
+- .env 文件           — 绝不读取、修改或记录这些文件
 
-## Testing
-Run before marking any task done:
-  npm test              (unit tests — must all pass)
-  npm run test:int      (integration tests — must all pass)
+## 测试
+标记任务完成前必须运行：
+  npm test              （单元测试——必须全部通过）
+  npm run test:int      （集成测试——必须全部通过）
 
-## Handoff
-When completing a task, create TASK_STATUS.md with:
-- What was done
-- What tests were run
-- What remains incomplete
-- Any decisions made and why
+## Handoff（交接）
+完成任务时，创建 TASK_STATUS.md，包含：
+- 完成了什么
+- 运行了哪些测试
+- 什么尚未完成
+- 做了哪些决策及其原因
 ```
 
-### The Agent File Maturity Ladder
+### Agent File 成熟度阶梯
 
-| Level | What Exists | Agent Behavior |
-|-------|-------------|----------------|
-| 0 — None | No agent file | Agent guesses conventions, makes inconsistent choices |
-| 1 — Basic | Lists what the codebase does | Fewer wrong-codebase assumptions |
-| 2 — Conventions | Adds do/don't rules | Consistent style and patterns |
-| 3 — Boundaries | Adds "don't touch" list | Avoids sensitive areas |
-| 4 — Verification | Adds test commands | Self-verifies before declaring done |
-| 5 — Handoff | Adds artifact spec | Sessions resume cleanly |
+| 级别 | 现有内容 | Agent 行为 |
+|------|---------|-----------|
+| 0 — 无 | 没有 agent file | Agent 猜测规范，做出不一致的选择 |
+| 1 — 基础 | 列出代码库的功能 | 减少对代码库的错误假设 |
+| 2 — 规范约定 | 添加 do/don't 规则 | 风格和模式保持一致 |
+| 3 — 边界 | 添加"禁止触碰"列表 | 避开敏感区域 |
+| 4 — 验证 | 添加测试命令 | 在宣告完成前自我验证 |
+| 5 — 交接 | 添加制品（artifact）规范 | 会话可以干净地恢复 |
 
-Aim for Level 4+.
+目标：达到第4级及以上。
 
-### Key Takeaways
+### 核心要点
 
-1. Agent files are the harness's persistent memory — they survive across every session.
-2. Good agent files specify what NOT to do, not just what to do.
-3. Specs enable deterministic, reproducible agent workflows — no ambiguity, no accumulating misinterpretation.
-4. Treat agent files as living documents — update them when the agent makes a surprising mistake.
-
----
-
-### 30-Second Elevator Pitch
-
-> "Agent files are persistent instructions in your repo. Without them, every session starts from scratch and conventions drift. With them, the agent knows your standards from line one."
+1. Agent files 是 harness 的持久记忆——它们在每次会话中都能幸存。
+2. 好的 agent files 明确指出**不**该做什么，而不仅仅是该做什么。
+3. Specs 让 Agent 工作流确定且可重现——无歧义，无累积的误解。
+4. 将 agent files 视为活文档——当 Agent 犯了出人意料的错误时，更新它。
 
 ---
 
-## 🧪 Practice 4
+### 30秒电梯演讲
 
-**Writing exercise**: Write a `CLAUDE.md` for a hypothetical project — a REST API for a small e-commerce store.
-
-Include ALL of these sections:
-
-1. **What the codebase does** — 2 sentences max
-2. **Architecture** — list the key folders/modules and what each does
-3. **Conventions** — 2 rules the agent MUST follow (e.g., testing patterns, error handling)
-4. **DO NOT Touch** — 1 area that is off-limits without human approval
-5. **Testing** — the exact command(s) to run before marking a task done
-6. **Handoff** — what the agent must leave behind when it finishes
-
-**Bonus**: Identify one thing that a naive agent would get wrong in your codebase that your `CLAUDE.md` prevents.
+> "Agent files 是代码仓库中的持久指令。没有它们，每次会话从零开始，规范不断漂移。有了它们，Agent 从第一行就知道你的标准。"
 
 ---
 
-## Further Reading
+## 🧪 实践 4
 
-- [AGENTS.md open format](https://github.com/agentsmd/agents.md) — Machine-readable agent instructions across tools
-- [Writing a good CLAUDE.md](https://www.humanlayer.dev/blog/writing-a-good-claude-md) — Practical guide to durable repo-local instructions
-- [12 Factor Agents](https://www.humanlayer.dev/blog/12-factor-agents) — Operating principles for production agents
-- [12-Factor AgentOps](https://www.12factoragentops.com/) — Context discipline, validation, reproducible workflows
-- [GitHub Spec Kit](https://github.com/github/spec-kit) — Toolkit for spec-driven development
-- [Understanding Spec-Driven-Development](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) — Thoughtworks on why strong specs make AI delivery more dependable
-- [Claude Code: Best practices for agentic coding](https://code.claude.com/docs) — Anthropic's practical recommendations
+**写作练习**：为一个假想项目编写一份 `CLAUDE.md`——一个小型电商店铺的 REST API。
+
+包含以下**所有**章节：
+
+1. **代码库是做什么的** — 最多2句话
+2. **架构** — 列出关键文件夹/模块及各自的职责
+3. **规范约定** — Agent 必须遵守的2条规则（例如：测试模式、错误处理）
+4. **禁止触碰** — 1个未经人工批准不可修改的区域
+5. **测试** — 标记任务完成前需要运行的精确命令
+6. **交接（Handoff）** — Agent 完成后必须留下什么内容
+
+**加分项**：找出一件你的代码库中一个"天真"的 Agent 可能犯错、但你的 `CLAUDE.md` 能防止的事情。
 
 ---
 
-*← [Lecture 3: Constraints & Safe Autonomy](./lecture-03-constraints-and-safe-autonomy.md)*
-*→ [Lecture 5: Evals & Observability](./lecture-05-evals-and-observability.md)*
+## 延伸阅读
+
+- [AGENTS.md 开放格式](https://github.com/agentsmd/agents.md) — 跨工具的机器可读 Agent 指令
+- [Writing a good CLAUDE.md](https://www.humanlayer.dev/blog/writing-a-good-claude-md) — 持久化代码仓库本地指令的实践指南
+- [12 Factor Agents](https://www.humanlayer.dev/blog/12-factor-agents) — 生产级 Agent 的操作原则
+- [12-Factor AgentOps](https://www.12factoragentops.com/) — 上下文纪律、验证、可重现工作流
+- [GitHub Spec Kit](https://github.com/github/spec-kit) — Spec-driven development 工具集
+- [Understanding Spec-Driven-Development](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) — Thoughtworks 谈强力 specs 如何让 AI 交付更可靠
+- [Claude Code: Best practices for agentic coding](https://code.claude.com/docs) — Anthropic 的实践建议
+
+---
+
+*← [第3讲：约束与安全自主性](./lecture-03-constraints-and-safe-autonomy.md)*
+*→ [第5讲：Evals 与可观测性](./lecture-05-evals-and-observability.md)*
