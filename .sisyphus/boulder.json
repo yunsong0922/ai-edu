@@ -1,0 +1,110 @@
+{
+  "active_plan": "/Users/yunsong/YunSong/ai-edu/.sisyphus/plans/ai-edu-center.md",
+  "started_at": "2026-03-30T03:39:09.024Z",
+  "session_ids": [
+    "ses_2c36466b7ffe6iqK5xVG2ZFTzN",
+    "ses_2c32b21cfffedCjJsJNsooVIqp",
+    "ses_2c3266554ffejYPfm1SxJF5YHP",
+    "ses_2c321859cffe3UCNKiZVEoNdhK",
+    "ses_2c31b6c8effemy3aK3sRaGCV6w",
+    "ses_2c317d6e9ffeOOcDCl7mU7oBMA",
+    "ses_2c311cb88ffeE85Duulu2tjf1Q",
+    "ses_2c30c75abffeqezkeGQspIM1MN",
+    "ses_2c3042834ffe7em1upkCQnkHwW",
+    "ses_2c2fad47effeKyV4scFkJHmoUk",
+    "ses_2c2effcc7ffeAeNQPZ2lexX4J0"
+  ],
+  "plan_name": "ai-edu-center",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "课程哲学与 L1-L4 能力等级定义",
+      "session_id": "ses_2c32b21cfffedCjJsJNsooVIqp",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-03-30T03:45:01.905Z"
+    },
+    "todo:6": {
+      "task_key": "todo:6",
+      "task_label": "6",
+      "task_title": "基础设施与成本模型",
+      "session_id": "ses_2c3266554ffejYPfm1SxJF5YHP",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-03-30T03:50:55.510Z"
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "教师指南与培训方案",
+      "session_id": "ses_2c321859cffe3UCNKiZVEoNdhK",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-03-30T03:57:22.204Z"
+    },
+    "todo:8": {
+      "task_key": "todo:8",
+      "task_label": "8",
+      "task_title": "评估体系与作品集模板",
+      "session_id": "ses_2c31b6c8effemy3aK3sRaGCV6w",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-03-30T04:01:13.116Z"
+    },
+    "todo:2": {
+      "task_key": "todo:2",
+      "task_label": "2",
+      "task_title": "阶段一课程：对话者（Dialoguer）",
+      "session_id": "ses_2c317d6e9ffeOOcDCl7mU7oBMA",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-03-30T04:08:05.784Z"
+    },
+    "todo:3": {
+      "task_key": "todo:3",
+      "task_label": "3",
+      "task_title": "阶段二课程：创造者（Creator）",
+      "session_id": "ses_2c311cb88ffeE85Duulu2tjf1Q",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-03-30T04:13:54.698Z"
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "阶段三课程：建造者（Builder）",
+      "session_id": "ses_2c30c75abffeqezkeGQspIM1MN",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-03-30T04:20:42.646Z"
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "阶段四课程：设计者（Designer）— L4 顶石阶段",
+      "session_id": "ses_2c3042834ffe7em1upkCQnkHwW",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-03-30T04:31:55.366Z"
+    },
+    "todo:9": {
+      "task_key": "todo:9",
+      "task_label": "9",
+      "task_title": "挑战库（20+挑战，跨阶段，含年龄分层）",
+      "session_id": "ses_2c2fad47effeKyV4scFkJHmoUk",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-03-30T04:42:52.747Z"
+    },
+    "todo:10": {
+      "task_key": "todo:10",
+      "task_label": "10",
+      "task_title": "集成审查与快速上手指南",
+      "session_id": "ses_2c2effcc7ffeAeNQPZ2lexX4J0",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-03-30T04:52:23.607Z"
+    }
+  }
+}
