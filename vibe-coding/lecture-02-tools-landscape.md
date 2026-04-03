@@ -19,7 +19,7 @@ Vibe Coding 工具可以按**你在哪里用、你有多少技术背景**分成 
 
 | 类型 | 在哪里用 | 面向谁 | 代表工具 |
 |------|---------|-------|---------|
-| 🌐 **浏览器工具** | 打开网页就能用 | 非技术人员、快速原型 | Bolt.new、Lovable、v0 |
+| 🌐 **浏览器工具** | 打开网页就能用 | 非技术人员、快速原型 | **Google AI Studio**、Bolt.new、v0 |
 | 💻 **AI IDE** | 下载安装的代码编辑器 | 开发者，要速度+控制 | Cursor、Windsurf、Zed |
 | ⌨️ **命令行工具** | 在终端里运行 | 高级工程师 | Claude Code、aider |
 | 🧩 **插件/扩展** | 装在已有编辑器里 | 不想换编辑器的开发者 | GitHub Copilot、Cline |
@@ -101,7 +101,7 @@ Vibe Coding 工具可以按**你在哪里用、你有多少技术背景**分成 
 我是谁？
 │
 ├── 完全不懂代码，只想把想法变成产品
-│   └── → Lovable（最友好）或 Bolt.new（功能最全）
+│   └── → **Google AI Studio**（首选，完全免费）或 Bolt.new
 │
 ├── 懂一点代码，想快速做原型
 │   └── → v0（最适合 Web/React）或 Replit（最适合有后端的项目）
@@ -122,8 +122,8 @@ Vibe Coding 工具可以按**你在哪里用、你有多少技术背景**分成 
 **几个值得单独说的工具：**
 
 - 🔥 **Cursor**：目前最流行的 AI IDE，被大量职业开发者使用。Cloud Agents 模式可以完全自主完成任务。
+- 🔥 **Google AI Studio**：**教学首选**。完全免费，用 Google 账号直接登录，无需信用卡。由 Google 出品，背后是 Gemini 模型。
 - 🔥 **Bolt.new**：功能最完整的浏览器工具，支持全栈 App，免费额度慷慨。
-- 🔥 **Lovable**：非技术人员体验最流畅，号称"超级人类全栈工程师"。
 - 🔥 **Claude Code**：命令行里的标杆，对大型代码库的理解能力最强。
 - 🔥 **vibe-kanban**：特别的存在——一个专门管理 AI 代理的看板，可以同时跑 10+ 个 AI 代理并行工作。
 
@@ -142,7 +142,7 @@ Vibe Coding 工具可以按**你在哪里用、你有多少技术背景**分成 
 
 | 工具 | 干什么的 |
 |------|---------|
-| **Claude Task Master** | AI 自动把你的项目拆解成小任务，逐个执行，可用于 Cursor/Lovable/Windsurf 等 |
+| **Claude Task Master** | AI 自动把你的项目拆解成小任务，逐个执行，可用于 Cursor/Windsurf 等 |
 | **vibe-kanban** | 可视化看板，同时编排 10+ 个 AI 代理，每个代理负责不同功能 |
 | **CCPM** | 专门为 Claude Code 设计，用 GitHub Issues + Git worktree 管理并行代理 |
 | **Boomerang Tasks** | Roo Code 的功能，自动把复杂任务分解成可执行的小块 |
@@ -237,7 +237,7 @@ Vibe Coding 工具就像**不同级别的餐厅：**
 4. 大项目需要任务管理 + 文档工具，否则 AI 会失去方向
 
 > **30 秒版本：**
-> "不懂代码用 Bolt 或 Lovable，在浏览器里描述你想要什么，10 分钟出原型。会写代码就用 Cursor，它能理解你整个项目、自动完成复杂任务。命令行爱好者用 Claude Code。不管用哪个，确保它支持 Agentic 模式——那才是真正的 Vibe Coding。"
+> "不懂代码用 Google AI Studio，在浏览器里描述你想要什么，10 分钟出原型。会写代码就用 Cursor，它能理解你整个项目、自动完成复杂任务。命令行爱好者用 Claude Code。不管用哪个，确保它支持 Agentic 模式——那才是真正的 Vibe Coding。"
 
 ---
 
@@ -275,7 +275,7 @@ Vibe Coding 工具就像**不同级别的餐厅：**
 
 **提示词：** *"做一个记账小工具：可以添加收入/支出记录（名称+金额+类别），显示总余额，用列表展示所有记录，可以删除记录。"*
 
-- 工具 A：[bolt.new](https://bolt.new)（浏览器工具）
+- 工具 A：[Google AI Studio](https://aistudio.google.com)（浏览器工具）
 - 工具 B：[v0.dev](https://v0.dev)（浏览器工具，偏 React 组件）
 
 **比较维度：**

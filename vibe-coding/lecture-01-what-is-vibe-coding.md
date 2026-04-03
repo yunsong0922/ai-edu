@@ -74,7 +74,7 @@ Vibe Coding 是一种新的造软件的方式：**你说你想要什么，AI 帮
 
 但注意：它不是"理解"代码，它是在做**极度复杂的模式匹配**。这也是为什么它有时候会犯很蠢的错误。
 
-**Vibe Coding 工具**（比如 Bolt.new、Cursor、Claude Code）在 LLM 外面加了一层壳，让 AI 不只是给你回答，而是可以：
+**Vibe Coding 工具**（比如 Google AI Studio、Cursor、Claude Code）在 LLM 外面加了一层壳，让 AI 不只是给你回答，而是可以：
 - 直接创建文件
 - 运行程序
 - 看到报错然后自己修
@@ -183,7 +183,7 @@ Vibe Coding 像是**当一个电影导演**，而不是摄影师：
 ### 练习 1-A：体验纯 Vibe Coding（约 20 分钟）
 
 **步骤：**
-1. 打开 [bolt.new](https://bolt.new) 或 [lovable.dev](https://lovable.dev)（免费，无需安装）
+1. 打开 [Google AI Studio](https://aistudio.google.com)（免费，无需安装，用 Google 账号登录即可）
 2. 输入以下提示词：
    > *"帮我做一个个人主页：深色背景，顶部显示我的名字（随便取一个），下面有一段自我介绍，再下面有 3 个作品卡片（内容随意），底部有邮箱联系方式。"*
 3. 看 AI 生成的结果

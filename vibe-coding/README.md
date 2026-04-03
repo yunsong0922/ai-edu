@@ -18,7 +18,7 @@ Vibe Coding 课程（共 4 讲 + 1 个综合项目）
 │   ├── Vibe Coding 光谱：从零代码到 AI 辅助专业开发
 │   ├── AI 写代码的原理（LLM 的本质）
 │   ├── 能做什么 vs 不能做什么
-│   └── 🔬 练习：体验 Bolt.new 纯 Vibe Coding
+│   └── 🔬 练习：体验 Google AI Studio 纯 Vibe Coding
 │
 ├── 🗺️ Lecture 2: 工具全景图
 │   ├── 4 大工具类别：浏览器/AI IDE/CLI/插件
@@ -122,8 +122,8 @@ Vibe Coding
 
 | 你是谁 | 推荐工具 | 链接 |
 |-------|---------|------|
-| 完全不懂代码 | Bolt.new | bolt.new |
-| 想快速做原型 | Lovable | lovable.dev |
+| 完全不懂代码 | Google AI Studio | aistudio.google.com |
+| 想快速做原型 | Bolt.new | bolt.new |
 | React 开发者 | v0 by Vercel | v0.dev |
 | 会写代码的开发者 | Cursor | cursor.com |
 | 住在终端的工程师 | Claude Code | claude.ai |

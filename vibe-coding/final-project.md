@@ -49,7 +49,7 @@
 
 ```
 项目名称：_______________
-选用工具：_______________（建议：Bolt.new / Lovable / Cursor）
+选用工具：_______________（建议：Google AI Studio / Bolt.new / Cursor）
 
 功能模块拆解：
 ┌─────────────────────────────────┐
@@ -309,7 +309,7 @@ git commit -m "阶段5: 安全审查与修复"
 ## 资源速查 / Quick Reference
 
 **工具链接：**
-- 零代码/低代码：[bolt.new](https://bolt.new) | [lovable.dev](https://lovable.dev) | [v0.dev](https://v0.dev)
+- 零代码/低代码：[Google AI Studio](https://aistudio.google.com) | [bolt.new](https://bolt.new) | [v0.dev](https://v0.dev)
 - AI IDE：[cursor.com](https://cursor.com)（需下载）
 - 部署：[vercel.com](https://vercel.com)（免费，一键部署）
 - 费用及教学方案对比：[`tools-and-pricing.md`](./tools-and-pricing.md)

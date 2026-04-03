@@ -10,32 +10,13 @@
 
 | 工具 | 免费额度 | 教学够用吗？ | 付费方案 |
 |------|---------|-----------|---------|
-| **[Bolt.new](https://bolt.new)** | 300K tokens/天，1M tokens/月 | ✅ 够，整个课程免费完成 | Pro $25/月 |
-| **[Lovable](https://lovable.dev)** | 有限（未公开具体数量） | ⚠️ 够 1-2 次体验，不够完整项目 | Pro $25/月；学生半价 $12.50/月 |
+| **[Google AI Studio](https://aistudio.google.com)** | 完全免费，无限制 | ✅ **教学首选**，整个课程免费完成 | 无 |
+| **[Bolt.new](https://bolt.new)** | 300K tokens/天，1M tokens/月 | ✅ 够，免费额度慷慨 | Pro $25/月 |
 | **[v0 by Vercel](https://v0.dev)** | 有免费额度 | ⚠️ 够体验，偏 UI 组件，非完整 App | 包含在 Vercel 付费计划 |
-| **[Google AI Studio](https://aistudio.google.com)** | 完全免费 | ✅ 够，但功能较简单 | 无 |
+| **[Lovable](https://lovable.dev)** | 有限（未公开具体数量） | ⚠️ 够 1-2 次体验，不够完整项目 | Pro $25/月；学生半价 $12.50/月 |
 | **[Replit](https://replit.com)** | 有限免费 | ⚠️ 勉强够，后端功能需付费 | $25/月 |
 
-**教学建议：Bolt.new 是默认首选。** 免费额度对中学生一节课、一个项目都足够，无需学生付费或注册信用卡。
-
----
-
-## Lovable 教育专项方案
-
-Lovable 有两个面向教育的渠道：
-
-**① 学生折扣（个人）**
-- 学生用教育邮箱验证，Pro 方案半价：**$12.50/月**
-- 适合大学生，中学生通常没有教育邮箱
-
-**② Lovable for Classroom（课堂方案）**
-- 与 [imagi Edu](https://edu.imagilabs.com) 合作
-- 面向 **6-12 年级**（初中+高中）
-- 教师免费注册，学生通过 imagi 平台获得**临时匿名账号**
-- 不需要学生邮箱，不收集学生数据（COPPA 合规）
-- 提供现成教案和教学材料
-- 详情：[lovable.dev/classroom](https://lovable.dev/classroom)
-- ⚠️ 注意：官网曾标注免费期至 2026 年 3 月，当前状态需联系确认
+**教学建议：Google AI Studio 是默认首选。** 完全免费，用 Google 账号登录即可，无需信用卡，适合中学生课堂。
 
 ---
 
